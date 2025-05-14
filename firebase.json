@@ -1,1 +1,52 @@
-{"flutter":{"platforms":{"android":{"default":{"projectId":"photojournal-a784e","appId":"1:291215475883:android:a1df13f8ebe9032499e3ee","fileOutput":"android/app/google-services.json"}},"ios":{"default":{"projectId":"photojournal-a784e","appId":"1:291215475883:ios:db015a8781b2328099e3ee","uploadDebugSymbols":false,"fileOutput":"ios/Runner/GoogleService-Info.plist"}},"macos":{"default":{"projectId":"photojournal-a784e","appId":"1:291215475883:ios:2529426f9e4f400499e3ee","uploadDebugSymbols":false,"fileOutput":"macos/Runner/GoogleService-Info.plist"}},"dart":{"lib/firebase_options.dart":{"projectId":"photojournal-a784e","configurations":{"android":"1:291215475883:android:a1df13f8ebe9032499e3ee","ios":"1:291215475883:ios:db015a8781b2328099e3ee","macos":"1:291215475883:ios:2529426f9e4f400499e3ee","web":"1:291215475883:web:30c9a4da1fff024799e3ee","windows":"1:291215475883:web:30c9a4da1fff024799e3ee"}}}}}}
+{
+  "flutter": {
+    "platforms": {
+      "android": {
+        "default": {
+          "projectId": "photojournal-a784e",
+          "appId": "1:291215475883:android:a1df13f8ebe9032499e3ee",
+          "fileOutput": "android/app/google-services.json"
+        }
+      },
+      "ios": {
+        "default": {
+          "projectId": "photojournal-a784e",
+          "appId": "1:291215475883:ios:db015a8781b2328099e3ee",
+          "uploadDebugSymbols": false,
+          "fileOutput": "ios/Runner/GoogleService-Info.plist"
+        }
+      },
+      "macos": {
+        "default": {
+          "projectId": "photojournal-a784e",
+          "appId": "1:291215475883:ios:2529426f9e4f400499e3ee",
+          "uploadDebugSymbols": false,
+          "fileOutput": "macos/Runner/GoogleService-Info.plist"
+        }
+      },
+      "dart": {
+        "lib/firebase_options.dart": {
+          "projectId": "photojournal-a784e",
+          "configurations": {
+            "android": "1:291215475883:android:a1df13f8ebe9032499e3ee",
+            "ios": "1:291215475883:ios:db015a8781b2328099e3ee",
+            "macos": "1:291215475883:ios:2529426f9e4f400499e3ee",
+            "web": "1:291215475883:web:30c9a4da1fff024799e3ee",
+            "windows": "1:291215475883:web:30c9a4da1fff024799e3ee"
+          }
+        }
+      }
+    }
+  },
+  "hosting": {
+    "source": "hosting",
+    "ignore": [
+      "firebase.json",
+      "**/.*",
+      "**/node_modules/**"
+    ],
+    "frameworksBackend": {
+      "region": "us-west1"
+    }
+  }
+}
