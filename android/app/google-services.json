@@ -1,0 +1,98 @@
+{
+  "project_info": {
+    "project_number": "291215475883",
+    "project_id": "photojournal-a784e",
+    "storage_bucket": "photojournal-a784e.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:291215475883:android:a1df13f8ebe9032499e3ee",
+        "android_client_info": {
+          "package_name": "com.example.journal"
+        }
+      },
+      "oauth_client": [
+        {
+          "client_id": "291215475883-u98e4lmvjm4dc6r6oflc7livtlu2qeu0.apps.googleusercontent.com",
+          "client_type": 1,
+          "android_info": {
+            "package_name": "com.example.journal",
+            "certificate_hash": "851fda8836f98a1ca726232e93bfa5bc99e429a1"
+          }
+        },
+        {
+          "client_id": "291215475883-cfl96db3o3m6v61vi9sv59i60akb5q8g.apps.googleusercontent.com",
+          "client_type": 3
+        }
+      ],
+      "api_key": [
+        {
+          "current_key": "AIzaSyAf8tXppix5q1_2xFcdognpVdyAxYkEu1Q"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": [
+            {
+              "client_id": "291215475883-cfl96db3o3m6v61vi9sv59i60akb5q8g.apps.googleusercontent.com",
+              "client_type": 3
+            },
+            {
+              "client_id": "291215475883-gpvef8cb5p1d8didqauvt7n2pvtrfmug.apps.googleusercontent.com",
+              "client_type": 2,
+              "ios_info": {
+                "bundle_id": "com.example.journal"
+              }
+            }
+          ]
+        }
+      }
+    },
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:291215475883:android:376a4f72d2b45b7a99e3ee",
+        "android_client_info": {
+          "package_name": "com.mikemac15.jamies_journal"
+        }
+      },
+      "oauth_client": [
+        {
+          "client_id": "291215475883-jfhl2jl6ljcga33m7cq0u0dpfv2hfecc.apps.googleusercontent.com",
+          "client_type": 1,
+          "android_info": {
+            "package_name": "com.mikemac15.jamies_journal",
+            "certificate_hash": "851fda8836f98a1ca726232e93bfa5bc99e429a1"
+          }
+        },
+        {
+          "client_id": "291215475883-cfl96db3o3m6v61vi9sv59i60akb5q8g.apps.googleusercontent.com",
+          "client_type": 3
+        }
+      ],
+      "api_key": [
+        {
+          "current_key": "AIzaSyAf8tXppix5q1_2xFcdognpVdyAxYkEu1Q"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": [
+            {
+              "client_id": "291215475883-cfl96db3o3m6v61vi9sv59i60akb5q8g.apps.googleusercontent.com",
+              "client_type": 3
+            },
+            {
+              "client_id": "291215475883-gpvef8cb5p1d8didqauvt7n2pvtrfmug.apps.googleusercontent.com",
+              "client_type": 2,
+              "ios_info": {
+                "bundle_id": "com.example.journal"
+              }
+            }
+          ]
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}

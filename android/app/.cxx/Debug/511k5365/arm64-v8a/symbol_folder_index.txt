@@ -1,0 +1,1 @@
+/Users/michaelmcintosh/Desktop/Flutter Apps/newJournal/journal/build/app/intermediates/cxx/Debug/511k5365/obj/arm64-v8a
