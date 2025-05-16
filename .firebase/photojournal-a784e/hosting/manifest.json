@@ -1,6 +1,6 @@
 {
-    "name": "photojournal_a784e",
-    "short_name": "photojournal_a784e",
+    "name": "journal",
+    "short_name": "journal",
     "start_url": ".",
     "display": "standalone",
     "background_color": "#0175C2",

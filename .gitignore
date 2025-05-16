@@ -43,3 +43,61 @@ app.*.map.json
 /android/app/debug
 /android/app/profile
 /android/app/release
+
+
+# Flutter / Dart ################################################
+
+# Generated files
+.dart_tool/
+.packages
+.pub/
+.buildlog/
+.build/
+build/
+.flutter-plugins
+.flutter-plugins-dependencies
+.flutter-configuration-cache
+.flutter_web_plugins
+
+# Metadata
+*.lock
+metadata
+pubspec.lock
+
+# IDE settings
+.idea/
+.vscode/
+*.iml
+
+# macOS
+macos/Flutter/ephemeral/
+
+# iOS
+ios/Pods/
+ios/.symlinks/
+ios/Flutter/Flutter.framework
+ios/Flutter/Flutter.podspec
+ios/Flutter/Generated.xcconfig
+ios/ServiceDefinitions.json
+
+# Android
+android/.gradle/
+android/app/**/local.properties
+android/*.iml
+android/app/build/
+android/build/
+
+# Web build artifacts
+build/web/
+
+# Firebase local emulator & hosting cache
+.firebase/
+.firebase*/  
+hosting/
+hosting.*  
+
+.metadata
+hosting
+firebase.json
+ios
+android
