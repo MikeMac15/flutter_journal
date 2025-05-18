@@ -20,41 +20,62 @@ class ActivityList extends StatelessWidget {
     return '';
   }
 
-  @override
-  Widget build(BuildContext context) {
-    final maxHeight = MediaQuery.of(context).size.height * 0.3;
-    return SizedBox(
-      height: maxHeight,
-      child: ListView.builder(
-        itemCount: savedActivities.length,
-        itemBuilder: (context, index) {
-          final entry = savedActivities[index];
-          final name = _extractText(entry['name']) ;
-          final description = _extractText(entry['description']);
+@override
+Widget build(BuildContext context) {
+  final theme = Theme.of(context);
+  // Max height so it never takes more than 30% of the screen,
+  // but will shrink if there are only a couple of entries.
+  final maxListHeight = MediaQuery.of(context).size.height * 0.3;
 
-          return Padding(
-            padding: const EdgeInsets.only(bottom: 8.0),
-            child: Card(
-              child: ListTile(
-                tileColor: tileColors['primary'],
-                title: Text(
-                  name.isNotEmpty ? name : 'No Name',
-                  style: const TextStyle(fontSize: 18),
+  return ConstrainedBox(
+    constraints: BoxConstraints(maxHeight: maxListHeight),
+    child: ListView.builder(
+      padding: const EdgeInsets.symmetric(vertical: 8),
+      itemCount: savedActivities.length,
+      itemBuilder: (context, index) {
+        final entry = savedActivities[index];
+        final name = _extractText(entry['name']).trim();
+        final description = _extractText(entry['description']).trim();
+
+        return Card(
+          margin: const EdgeInsets.symmetric(vertical: 6),
+          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+          elevation: 2,
+          child: Padding(
+            padding: const EdgeInsets.all(12),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                // Activity name
+                Text(
+                  name.isNotEmpty ? name : 'Unnamed Activity',
+                  style: theme.textTheme.titleMedium?.copyWith(fontWeight: FontWeight.bold),
                 ),
-                subtitle: description.isNotEmpty
-                    ? Text(description, style: const TextStyle(fontSize: 12))
-                    : null,
-                trailing: onDelete != null
-                    ? IconButton(
-                        icon: const Icon(Icons.delete, color: Colors.red),
-                        onPressed: () => onDelete!(index),
-                      )
-                    : null,
-              ),
+                const SizedBox(height: 6),
+                // Description, if any
+                if (description.isNotEmpty)
+                  Text(
+                    description,
+                    style: theme.textTheme.bodyMedium,
+                  ),
+                // Delete button aligned right
+                if (onDelete != null)
+                  Align(
+                    alignment: Alignment.centerRight,
+                    child: IconButton(
+                      icon: const Icon(Icons.delete_outline, color: Colors.redAccent),
+                      onPressed: () => onDelete!(index),
+                      tooltip: 'Remove this activity',
+                    ),
+                  ),
+              ],
             ),
-          );
-        },
-      ),
-    );
-  }
+          ),
+        );
+      },
+    ),
+  );
+}
+
+
 }

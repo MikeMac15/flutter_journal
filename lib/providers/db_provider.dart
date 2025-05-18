@@ -206,6 +206,38 @@ Map<String, dynamic>? getJournalEntryById(String entryId) {
     }
   }
 
+  Future<void> saveChapter({
+    required String name,
+    required String description,
+    String? imageUrl,
+  }) async {
+    final uid = FirebaseAuth.instance.currentUser!.uid;
+    // 1) push a new doc into users/<<uid>>/chapters
+    final docRef = await FirebaseFirestore.instance
+        .collection('users')
+        .doc(uid)
+        .collection('chapters')
+        .add({
+      'name': name,
+      'description': description,
+      'image': imageUrl ?? '',
+      'createdAt': FieldValue.serverTimestamp(),
+      'entryIDs': <String>[],
+    });
+
+    // 2) update your local cache
+    _chapters[docRef.id] = {
+      'id': docRef.id,
+      'name': name,
+      'description': description,
+      'image': imageUrl ?? '',
+      'createdAt': DateTime.now(),
+      'entryIDs': <String>[],
+    };
+
+    notifyListeners();
+  }
+
   Future<void> loadChapters() async {
     final uid = _userId!;
     try {

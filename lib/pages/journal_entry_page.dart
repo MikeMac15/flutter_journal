@@ -129,126 +129,202 @@ class _JournalEntryPageState extends State<JournalEntryPage> {
   //   });
   // }
 
-  @override
-  Widget build(BuildContext context) {
-    final screenHeight = MediaQuery.of(context).size.height;
-    return Scaffold(
-      appBar: AppBar(
-        // backgroundColor: Colors.white,
-        // title: Text('stuff'),
-        leading: IconButton(
-          icon: const Icon(
-            Icons.delete,
-            color: Colors.red,
-          ),
-          onPressed: () {
-            Navigator.pop(context);
-          },
-        ),
-        actions: [
-          TextButton(
-            onPressed: () {
-              final dbProvider =
-                  Provider.of<DBProvider>(context, listen: false);
+@override
+Widget build(BuildContext context) {
+  final theme = Theme.of(context);
+  final screenHeight = MediaQuery.of(context).size.height;
 
-              dbProvider.saveEntryToFirestore(
-                  context: context,
-                  currentUser: _currentUser,
-                  chapterId: _selectedChapterId,
-                  activityControllers: _activityControllers,
-                  textController: _textController,
-                  locationTextController: _locationTextController,
-                  selectedDate: _selectedDate,
-                  imagePaths: _chosenPhotoPaths);
-            },
-            child: const Text(
-              "Save",
-              style: TextStyle(color: Colors.blue, fontSize: 20),
-            ),
-          )
-        ],
+  return Scaffold(
+    backgroundColor: theme.colorScheme.background,
+    appBar: AppBar(
+      elevation: 2,
+      backgroundColor: theme.colorScheme.surface,
+      leading: IconButton(
+        icon: const Icon(Icons.close, color: Colors.redAccent),
+        onPressed: () => Navigator.pop(context),
       ),
-      body: SingleChildScrollView(
-        child: Padding(
-          padding: const EdgeInsets.all(16.0),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              EntryDatePicker(
+      actions: [
+        TextButton(
+          onPressed: _saveEntry,
+          child: Text(
+            "Save",
+            style: theme.textTheme.labelLarge?.copyWith(
+              color: theme.colorScheme.primary,
+              fontSize: 16,
+              fontWeight: FontWeight.w600,
+            ),
+          ),
+        ),
+      ],
+    ),
+    body: SingleChildScrollView(
+      padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 16),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.stretch,
+        children: [
+          // Date picker card
+          Card(
+            shape: RoundedRectangleBorder(
+              borderRadius: BorderRadius.circular(12),
+            ),
+            elevation: 3,
+            child: Padding(
+              padding: const EdgeInsets.all(12),
+              child: EntryDatePicker(
                 selectedDate: _selectedDate,
                 onDateChanged: _updateSelectedDate,
               ),
-              const SizedBox(height: 20),
-              TextEntry(
-                isMultiLine: false,
-                controller: _locationTextController,
-                hintText: 'Location (optional)',
-              ),
-              const SizedBox(height: 20),
-              ChapterSelector(
-                onChapterSelected: _handleChapterSelected,
-              ),
-              const SizedBox(height: 20),
-              const Text('Journal Entry',
-                  style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
-              SizedBox(
-                height: screenHeight * 0.35,
-                child: TextEntry(
-                  isMultiLine: true,
-                  controller: _textController,
-                  hintText: 'Write your journal entry here...',
-                  onChanged: (text) {
-                    // print('Text changed: $text');
-                  },
-                ),
-              ),
-              const SizedBox(height: 20),
-              SizedBox(
-                child: Column(
-                  children: [
-                    _activities
-                        ? ActivityList(
-                            savedActivities: _activityControllers
-                                .map((ctrlMap) => {
-                                      'name': ctrlMap['name']!.text,
-                                      'description':
-                                          ctrlMap['description']!.text,
-                                    })
-                                .toList(),
-                            onDelete: _deleteActivity,
-                          )
-                        : Text(''),
-                    SizedBox(
-                      child: ActivityLog(
-                        controllers: _activityControllers,
-                        onSaveActivity: _saveActivity,
-                        onActivitiesChanged: (activities) {
-                          // print('Activities updated: $activities');
-                        },
-                      ),
-                    ),
-                  ],
-                ),
-              ),
-              SizedBox(
-                height: 300,
-                child: ViewChosenImages(chosenPhotoPaths: _chosenPhotoPaths),
-              ),
-              const SizedBox(height: 20),
-              Row(
-                mainAxisAlignment: MainAxisAlignment.spaceEvenly,
-                children: [
-                  ElevatedButton(
-                      onPressed: _getImageFromGallery,
-                      child: const Text('Add an image')),
-                ],
-              ),
-            ],
+            ),
           ),
-        ),
+          const SizedBox(height: 16),
+
+          // Location input
+          Text(
+            "Location",
+            style: theme.textTheme.titleMedium?.copyWith(fontWeight: FontWeight.w600),
+          ),
+          const SizedBox(height: 8),
+          TextEntry(
+            isMultiLine: false,
+            controller: _locationTextController,
+            hintText: '(optional)',
+          ),
+          const SizedBox(height: 24),
+
+          // Chapter selector
+          Card(
+            shape: RoundedRectangleBorder(
+              borderRadius: BorderRadius.circular(12),
+            ),
+            elevation: 2,
+            child: ListTile(
+              leading: const Icon(Icons.menu_book),
+              title: const Text("Chapter"),
+              subtitle: Text(
+                _selectedChapterId != null
+                    ? (Provider.of<DBProvider>(context, listen: false)
+                            .getChapterById(_selectedChapterId!)?['name'] ??
+                        "Unknown")
+                    : "Select a chapter",
+              ),
+              trailing: const Icon(Icons.chevron_right),
+              onTap: () => showModalBottomSheet(
+                context: context,
+                builder: (_) => ChapterSelector(
+                  onChapterSelected: _handleChapterSelected,
+                ),
+              ),
+            ),
+          ),
+          const SizedBox(height: 24),
+
+          // Journal entry
+          Text(
+            "Journal Entry",
+            style: theme.textTheme.titleMedium?.copyWith(fontWeight: FontWeight.w600),
+          ),
+          const SizedBox(height: 8),
+          Container(
+            height: screenHeight * 0.3,
+            decoration: BoxDecoration(
+              border: Border.all(color: theme.dividerColor),
+              borderRadius: BorderRadius.circular(8),
+            ),
+            child: TextEntry(
+              isMultiLine: true,
+              controller: _textController,
+              hintText: 'Write your thoughts here...',
+            ),
+          ),
+          const SizedBox(height: 24),
+
+          // Activities
+          if (_activities) ...[
+            Text(
+              "Activities",
+              style: theme.textTheme.titleMedium?.copyWith(fontWeight: FontWeight.w600),
+            ),
+            const SizedBox(height: 8),
+            ActivityList(
+              savedActivities: _activityControllers
+                  .map((c) => {
+                        'name': c['name']!.text,
+                        'description': c['description']!.text,
+                      })
+                  .toList(),
+              onDelete: _deleteActivity,
+            ),
+            const SizedBox(height: 16),
+          ],
+          ActivityLog(
+            controllers: _activityControllers,
+            onSaveActivity: _saveActivity,
+            onActivitiesChanged: (_) {},
+          ),
+          const SizedBox(height: 24),
+
+          // Images preview
+          Text(
+  "Images",
+  style: theme.textTheme.titleMedium
+      ?.copyWith(fontWeight: FontWeight.w600),
+),
+const SizedBox(height: 8),
+
+// Animate between zero and a max height
+AnimatedSize(
+  duration: const Duration(milliseconds: 300),
+  curve: Curves.easeInOut,
+  child: ConstrainedBox(
+    constraints: BoxConstraints(
+      // when there are no images, collapse to 0
+      minHeight: _chosenPhotoPaths.isEmpty ? 0 : 100,
+      maxHeight: _chosenPhotoPaths.isEmpty
+          ? 0
+          : MediaQuery.of(context).size.height * 0.25,
+    ),
+    child: _chosenPhotoPaths.isEmpty
+        // show nothing when empty
+        ? const SizedBox.shrink()
+        // otherwise your carousel
+        : ViewChosenImages(chosenPhotoPaths: _chosenPhotoPaths),
+  ),
+),
+const SizedBox(height: 16),
+
+          // Add image button
+          ElevatedButton.icon(
+            onPressed: _getImageFromGallery,
+            icon: const Icon(Icons.add_a_photo),
+            label: const Text("Add Image"),
+            style: ElevatedButton.styleFrom(
+              padding: const EdgeInsets.symmetric(vertical: 14),
+              textStyle: theme.textTheme.labelLarge?.copyWith(fontSize: 16),
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(8),
+              ),
+            ),
+          ),
+          const SizedBox(height: 24),
+        ],
       ),
-    );
-  }
+    ),
+  );
+}
+
+void _saveEntry() {
+  Provider.of<DBProvider>(context, listen: false).saveEntryToFirestore(
+    context: context,
+    currentUser: _currentUser,
+    chapterId: _selectedChapterId,
+    activityControllers: _activityControllers,
+    textController: _textController,
+    locationTextController: _locationTextController,
+    selectedDate: _selectedDate,
+    imagePaths: _chosenPhotoPaths,
+  );
+}
+
 }
 
 // Placeholder AuthErrorPage
