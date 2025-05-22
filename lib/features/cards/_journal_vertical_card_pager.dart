@@ -8,14 +8,14 @@ import 'package:provider/provider.dart';
 import 'package:vertical_card_pager/vertical_card_pager.dart';
 
 class JournalVerticalPager extends StatefulWidget {
-  const JournalVerticalPager({Key? key}) : super(key: key);
+  const JournalVerticalPager({super.key});
 
   @override
   _JournalVerticalPagerState createState() => _JournalVerticalPagerState();
 }
 
 class _JournalVerticalPagerState extends State<JournalVerticalPager> {
-  List<Map<String, dynamic>> _entries = [];
+  List<JournalEntry> _entries = [];
 
   @override
   void initState() {
@@ -25,8 +25,8 @@ class _JournalVerticalPagerState extends State<JournalVerticalPager> {
 
   Future<void> _loadEntries() async {
     final entries =
-        Provider.of<DBProvider>(context, listen: false).journalEntries;
-    setState(() => _entries = entries.values.toList());
+        Provider.of<DBProvider>(context, listen: false).journalEntriesSorted;
+    setState(() => _entries = entries);
   }
 
   @override
@@ -47,7 +47,7 @@ class _JournalVerticalPagerState extends State<JournalVerticalPager> {
             context,
             MaterialPageRoute(
               builder: (_) => JournalEntryViewPage(
-                entryId: entry['id'] as String,
+                entryId: entry.id,
               ),
             ),
           );
@@ -68,12 +68,11 @@ class _JournalVerticalPagerState extends State<JournalVerticalPager> {
                   align: ALIGN.CENTER,
                   onPageChanged: (_) {},
                   onSelectedItem: (index) {
-                    print(index);
                     Navigator.push(
                       context,
                       MaterialPageRoute(
                         builder: (_) => JournalEntryViewPage(
-                          entryId: _entries[index]['id'] as String,
+                          entryId: _entries[index].id,
                         ),
                       ),
                     );

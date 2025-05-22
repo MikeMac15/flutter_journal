@@ -30,15 +30,16 @@ class JournalEntryViewPageState extends State<JournalEntryViewPage> {
     final entryData = Provider.of<DBProvider>(context, listen: false)
         .getJournalEntryById(widget.entryId);
 
-    if (entryData != null && entryData.isNotEmpty) {
+    if (entryData != null) {
       setState(() {
-        _entry = entryData['entry'] ?? '';
-        _location = entryData['location'] ?? '';
-        _imgUrls = List<String>.from(entryData['imgUrls'] ?? []);
-        _activities = List<Map<String, dynamic>>.from(entryData['activities'] ?? []);
-        _entryDate = entryData['date'] is DateTime
-            ? entryData['date']
-            : DateTime.parse(entryData['date'].toString());
+        _entry = entryData.entry;
+        _location = entryData.location;
+        _imgUrls = entryData.imgUrls;
+        // Safely cast activities to List<Map<String, dynamic>>
+        _activities = (entryData.activities as List)
+            .map((e) => Map<String, dynamic>.from(e as Map))
+            .toList();
+        _entryDate = entryData.date;
       });
     } else {
       setState(() {
@@ -54,7 +55,7 @@ class JournalEntryViewPageState extends State<JournalEntryViewPage> {
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
-    final dateString = '${_entryDate.month}/${_entryDate.day}/${_entryDate.year}';
+    // final dateString = '${_entryDate.month}/${_entryDate.day}/${_entryDate.year}';
 
     return Scaffold(
       appBar: AppBar(
@@ -76,7 +77,7 @@ class JournalEntryViewPageState extends State<JournalEntryViewPage> {
                   children: [
                     // Date
                     Text(
-                      dateString,
+                      _entryDate.toString(),
                       style: theme.textTheme.titleLarge?.copyWith(fontWeight: FontWeight.bold),
                       textAlign: TextAlign.center,
                     ),

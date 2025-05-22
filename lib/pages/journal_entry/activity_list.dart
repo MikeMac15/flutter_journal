@@ -1,6 +1,4 @@
 import 'package:flutter/material.dart';
-import 'package:journal/theme/_colors.dart';
-
 class ActivityList extends StatelessWidget {
   final List<Map<String, dynamic>> savedActivities;
   final void Function(int)? onDelete;

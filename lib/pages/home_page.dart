@@ -1,17 +1,17 @@
 import 'package:flutter/material.dart';
+import 'package:journal/features/calendar/_calendar_card.dart';
 import 'package:journal/pages/chapters/chapters_page.dart';
+import 'package:journal/pages/journal_entry_page.dart';
 import 'package:journal/pages/journal_recents_list.dart';
-import 'package:journal/pages/journal_view_page.dart';
-// import 'package:journal/pages/menu_buttons/menu_button.dart';
-import 'package:journal/providers/db_provider.dart';
+import 'package:journal/pages/settings.dart';
 import 'package:journal/providers/user_provider.dart';
 import 'package:journal/theme/_colors.dart';
 import 'package:provider/provider.dart';
-import 'package:table_calendar/table_calendar.dart';
-import 'journal_entry_page.dart';
-
 
 class HomePage extends StatefulWidget {
+  /// Pass in whatever header image URL you like:
+  // final String headerImageUrl;
+
   const HomePage({super.key});
 
   @override
@@ -20,245 +20,216 @@ class HomePage extends StatefulWidget {
 
 class _HomePageState extends State<HomePage> {
   
-  DateTime _focusedDay = DateTime.now();
-  DateTime? _selectedDay;
   @override
-  void initState() {
-    super.initState();
+  Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    final userProv = context.watch<UserProvider>();
+    final headerUrl = userProv.headerImageUrl;
+     final screenWidth = MediaQuery.of(context).size.width;
+  final avatarSize = (screenWidth * 0.08).clamp(50.0, 64.0);
+
+    return Scaffold(
+      body: LayoutBuilder(
+        builder: (context, constraints) {
+          const basePad = 24.0;
+          final extra = (constraints.maxWidth - 900).clamp(0.0, double.infinity);
+          final horizontalPad = basePad + (extra / 2);
+
+          return CustomScrollView(
+            slivers: [
+              // ─── SliverAppBar ───────────────────────────────────
+              SliverAppBar(
+                pinned: false,
+                elevation: 2,
+                expandedHeight: 250,
+                backgroundColor: Colors.white,
+                flexibleSpace: FlexibleSpaceBar(
+                  title: Text(
+                    'Jamie\'s Journal',
+                    style: theme.textTheme.titleMedium?.copyWith(
+                      color: Colors.white,
+                      letterSpacing: 1.2,
+                      fontSize: 24,
+                      fontWeight: FontWeight.bold,
+                      shadows: [
+                        Shadow(
+                          color: Colors.black.withOpacity(0.5),
+                          offset: const Offset(0, 1),
+                          blurRadius: 4,
+                        ),
+                      ],
+                    ),
+                  ),
+                  centerTitle: true,
+                  background: Stack(
+                    fit: StackFit.expand,
+                    children: [
+                      headerUrl != null
+  ? Image.network(headerUrl, fit: BoxFit.cover)
+  : Image.asset('assets/images/default_header.png', fit: BoxFit.cover),
+
+                      // subtle overlay so toolbar text pops
+                      DecoratedBox(
+                        decoration: BoxDecoration(
+                          gradient: LinearGradient(
+                            colors: [
+                              Colors.black.withOpacity(0.4),
+                              Colors.transparent
+                            ],
+                            begin: Alignment.bottomCenter,
+                            end: Alignment.topCenter,
+                          ),
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+                 actions: [
+    // Avatar icon
+    Padding(
+      padding: const EdgeInsets.symmetric(horizontal: 8.0),
+      child: CircleAvatar(
+        radius: avatarSize / 2.25,
+        backgroundColor: const Color.fromARGB(183, 239, 239, 239),
+        child: IconButton(
+          alignment: Alignment.center,
+      icon: Icon(Icons.settings,  color: theme.colorScheme.onSurface, size: 30),
+      tooltip: 'Settings',
+      onPressed: () {
+       
+        Navigator.of(context).push(
+          MaterialPageRoute(builder: (_) => SettingsPage()),
+        );
+      },
+    ),
+      ),
+    ),
     
-  }
+  ],
+              ),
 
+              // ─── Main Content ───────────────────────────────────
+              SliverPadding(
+                padding: EdgeInsets.symmetric(
+                  horizontal: horizontalPad,
+                  vertical: 16,
+                ),
+                sliver: SliverList(
+                  delegate: SliverChildListDelegate([
+                    // Calendar card
+                    const CalendarCard(),
 
+                    const SizedBox(height: 24),
 
-  void _onDaySelected(DateTime selectedDay, DateTime focusedDay) {
-    setState(() {
-      _selectedDay = selectedDay;
-      _focusedDay = focusedDay;
-    });
-    String? entryId = _hasJournalEntry(selectedDay);
-    if ( entryId != null){
-      // If the selected day has a journal entry, navigate to the journal entry page
-      Navigator.push(
-        context,
-        MaterialPageRoute(
-          builder: (_) => JournalEntryViewPage(entryId: entryId),
-        ),
-      );
-      return;
-    } 
+                    // Responsive action buttons
+                    Center(
+                      child: ConstrainedBox(
+                        constraints: const BoxConstraints(maxWidth: 900),
+                        child: LayoutBuilder(builder: (context, inner) {
+                          const gap = 16.0;
+                          const count = 3;
+                          final available =
+                              inner.maxWidth - gap * (count - 1);
+                          final side = available / count;
+                          final buttons = [
+                            [
+                              'New Entry',
+                              Icons.edit,
+                              JournalEntryPage(selectedDate: DateTime.now())
+                            ],
+                            ['Chapters', Icons.menu_book, ChaptersPage()],
+                            [
+                              'Recents',
+                              Icons.library_books,
+                              JournalRecentsList()
+                            ],
+                          ];
 
-    // Navigate to the journal entry page for the selected date
-    Navigator.push(
-      context,
-      MaterialPageRoute(
-        builder: (_) => JournalEntryPage(selectedDate: selectedDay),
+                          if (inner.maxWidth < 380) {
+                            return Column(
+                              children: buttons.map((btn) {
+                                return Padding(
+                                  padding:
+                                      const EdgeInsets.only(bottom: gap),
+                                  child: SizedBox(
+                                    width: inner.maxWidth,
+                                    height: side,
+                                    child:
+                                        _buildButton(btn, side, theme),
+                                  ),
+                                );
+                              }).toList(),
+                            );
+                          }
+
+                          return Row(
+                            mainAxisAlignment:
+                                MainAxisAlignment.spaceBetween,
+                            children: buttons.map((btn) {
+                              return ConstrainedBox(
+                                constraints: BoxConstraints(
+                                  minWidth: 100,
+                                  minHeight: 100,
+                                  maxWidth: side,
+                                  maxHeight: side,
+                                ),
+                                child: AspectRatio(
+                                  aspectRatio: 1,
+                                  child: _buildButton(btn, side, theme),
+                                ),
+                              );
+                            }).toList(),
+                          );
+                        }),
+                      ),
+                    ),
+                  ]),
+                ),
+              ),
+            ],
+          );
+        },
       ),
     );
   }
 
-
-String? _hasJournalEntry(DateTime day) {
-  // Check if the day has a journal entry
-  for (var entry in Provider.of<DBProvider>(context, listen: false).journalEntryDates) {
-    // Ensure both entry['date'] and 'day' are DateTime objects
-    DateTime entryDate = entry['date']; // Now it should be a DateTime
-    DateTime selectedDay = DateTime(day.year, day.month, day.day); // Only compare the date part
-
-    if (entryDate.year == selectedDay.year && entryDate.month == selectedDay.month && entryDate.day == selectedDay.day) {
-      return entry['id'];
-    }
-  }
-  return null;
-}
-
-
-
-@override
-Widget build(BuildContext context) {
-  final theme = Theme.of(context);
-
-  return Scaffold(
-    backgroundColor: theme.colorScheme.background,
-    appBar: AppBar(
-      elevation: 2,
-      backgroundColor: theme.colorScheme.surface,
-      title: const Text('Jamies Journal'),
-      actions: [
-        IconButton(
-          icon: const Icon(Icons.logout),
-          onPressed: () async {
-            await Provider.of<UserProvider>(context, listen: false).signOut();
-          },
-        ),
-      ],
-    ),
-
-    // Use LayoutBuilder so we can see how wide the window is
-    body: LayoutBuilder(
-      builder: (context, constraints) {
-        // Base padding when narrow, and add extra on each side once >900
-        const basePad = 24.0;
-        final extra = (constraints.maxWidth - 900).clamp(0.0, double.infinity);
-        final horizontalPad = basePad + (extra / 2);
-
-        return SingleChildScrollView(
-          padding: EdgeInsets.symmetric(
-            horizontal: horizontalPad,
-            vertical: 16,
+  // Helper unchanged from your original:
+  Widget _buildButton(List btn, double side, ThemeData theme) {
+    return Material(
+      elevation: 4,
+      borderRadius: BorderRadius.circular(12),
+      child: InkWell(
+        borderRadius: BorderRadius.circular(12),
+        onTap: () => Navigator.of(context)
+            .push(MaterialPageRoute(builder: (_) => btn[2] as Widget)),
+        child: Container(
+          padding: const EdgeInsets.all(16),
+          decoration: BoxDecoration(
+            gradient: LinearGradient(
+              colors: [
+                menuButtonColors['primary']!,
+                menuButtonColors['secondary']!
+              ],
+              begin: Alignment.topLeft,
+              end: Alignment.bottomRight,
+            ),
+            borderRadius: BorderRadius.circular(12),
           ),
           child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
+            mainAxisAlignment: MainAxisAlignment.center,
             children: [
-
-              // ─── Calendar Card ──────────────────────────────────
-              Card(
-                shape: RoundedRectangleBorder(
-                  borderRadius: BorderRadius.circular(12),
-                ),
-                elevation: 4,
-                margin: const EdgeInsets.only(bottom: 24),
-                child: Padding(
-                  padding: const EdgeInsets.all(12),
-                  child: TableCalendar(
-                    firstDay: DateTime.utc(2020, 1, 1),
-                    lastDay:  DateTime.utc(2030, 12, 31),
-                    focusedDay: _focusedDay,
-                    selectedDayPredicate: (d) => isSameDay(_selectedDay, d),
-                    onDaySelected: _onDaySelected,
-                    headerStyle: HeaderStyle(
-                      formatButtonVisible: false,
-                      titleCentered: true,
-                      titleTextStyle: theme.textTheme.titleMedium ?? const TextStyle(),
-                      leftChevronIcon: Icon(Icons.chevron_left, color: theme.colorScheme.primary),
-                      rightChevronIcon: Icon(Icons.chevron_right, color: theme.colorScheme.primary),
-                    ),
-                    calendarStyle: CalendarStyle(
-                      todayDecoration: BoxDecoration(
-                        shape: BoxShape.circle,
-                        color: theme.colorScheme.primaryContainer,
-                      ),
-                    ),
-                    calendarBuilders: CalendarBuilders(
-                      defaultBuilder: (ctx, day, focused) {
-                        final hasEntry = _hasJournalEntry(day);
-                        return Container(
-                          margin: const EdgeInsets.all(6),
-                          alignment: Alignment.center,
-                          decoration: BoxDecoration(
-                            color: hasEntry != null
-                              ? theme.colorScheme.primary.withOpacity(0.2)
-                              : null,
-                            shape: BoxShape.circle,
-                          ),
-                          child: Text(day.day.toString(),
-                              style: theme.textTheme.bodyMedium),
-                        );
-                      },
-                    ),
-                  ),
-                ),
+              Icon(btn[1] as IconData, size: 32, color: Colors.white),
+              const SizedBox(height: 8),
+              Text(
+                btn[0] as String,
+                textAlign: TextAlign.center,
+                style: theme.textTheme.bodyMedium
+                    ?.copyWith(color: Colors.white),
               ),
-
-              // ─── Responsive, square action buttons ────────────
-              
-Center(
-  child: ConstrainedBox(
-    constraints: const BoxConstraints(maxWidth: 900),
-    child: LayoutBuilder(builder: (context, inner) {
-      const gap = 16.0;
-      const count = 3;
-      final available = inner.maxWidth - gap * (count - 1);
-      final side = available / count;
-      final buttons = [
-        ['New Entry', Icons.edit, JournalEntryPage(selectedDate: DateTime.now())],
-        ['Chapters', Icons.menu_book, ChaptersPage()],
-        ['Recents', Icons.library_books, JournalRecentsList()],
-      ];
-
-      // If the whole area is narrower than 380px, switch to a column:
-      if (inner.maxWidth < 380) {
-        return Column(
-          children: buttons.map((btn) {
-            return Padding(
-              padding: const EdgeInsets.only(bottom: gap),
-              child: SizedBox(
-                width: inner.maxWidth, // full width
-                height: side,          // keep square aspect
-                child: _buildButton(btn, side, theme),
-              ),
-            );
-          }).toList(),
-        );
-      }
-
-      // Otherwise, normal row layout:
-      return Row(
-        mainAxisAlignment: MainAxisAlignment.spaceBetween,
-        children: buttons.map((btn) {
-          return ConstrainedBox(
-            constraints: BoxConstraints(
-              minWidth: 100,
-              minHeight: 100,
-              maxWidth: side,
-              maxHeight: side,
-            ),
-            child: AspectRatio(
-              aspectRatio: 1,
-              child: _buildButton(btn, side, theme),
-            ),
-          );
-        }).toList(),
-      );
-    }),
-  ),
-),
-
             ],
           ),
-        );
-      },
-    ),
-  );
-}
-
-// Helper to avoid repetition:
-Widget _buildButton(List btn, double side, ThemeData theme) {
-  return Material(
-    elevation: 4,
-    borderRadius: BorderRadius.circular(12),
-    child: InkWell(
-      borderRadius: BorderRadius.circular(12),
-      onTap: () => Navigator.of(context).push(
-        MaterialPageRoute(builder: (_) => btn[2] as Widget),
-      ),
-      child: Container(
-        padding: const EdgeInsets.all(16),
-        decoration: BoxDecoration(
-          gradient: LinearGradient(
-            colors: [
-              menuButtonColors['primary']!,
-              menuButtonColors['secondary']!
-            ],
-            begin: Alignment.topLeft,
-            end: Alignment.bottomRight,
-          ),
-          borderRadius: BorderRadius.circular(12),
-        ),
-        child: Column(
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: [
-            Icon(btn[1] as IconData, size: 32, color: Colors.white),
-            const SizedBox(height: 8),
-            Text(
-              btn[0] as String,
-              textAlign: TextAlign.center,
-              style: theme.textTheme.bodyMedium?.copyWith(color: Colors.white),
-            ),
-          ],
         ),
       ),
-    ),
-  );
-}
-
+    );
+  }
 }

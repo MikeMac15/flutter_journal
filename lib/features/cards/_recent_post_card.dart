@@ -3,10 +3,11 @@
 // import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/material.dart';
 import 'package:journal/features/cards/_journal_card_text_overlay.dart';
+import 'package:journal/providers/db_provider.dart';
 // import 'package:intl/intl.dart';
 
 class JournalPostCard extends StatefulWidget {
-  final Map<String, dynamic> entry;
+  final JournalEntry entry;
   final double scale;
   final VoidCallback onViewFull;
 
@@ -57,9 +58,9 @@ class _JournalPostCardState extends State<JournalPostCard>
     //     ? entry['date']
     //     : (entry['date'] as Timestamp).toDate();
     // final formattedDate = DateFormat.yMMMMd().format(date);
-    final imgUrls = entry['imgUrls'] as List<dynamic>?;
+    final imgUrls = entry.imgUrls;
     final imgUrl =
-        (imgUrls != null && imgUrls.isNotEmpty) ? imgUrls[0] as String : null;
+        (imgUrls.isNotEmpty) ? imgUrls[0] : null;
 
     return Card(
       shape: RoundedRectangleBorder(
@@ -88,9 +89,9 @@ class _JournalPostCardState extends State<JournalPostCard>
                 child: Align(
                   alignment: Alignment.bottomCenter,
                   child: JournalCardTextOverlay(
-                    location: entry['location'] as String,
-                    snippet: entry['entry'] as String,
-                    date: entry['date'],
+                    location: entry.location,
+                    snippet: entry.entry,
+                    date: entry.date,
                     scale: widget.scale,
                     onViewFull: widget.onViewFull,
                   ),

@@ -8,11 +8,37 @@ import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:image_picker/image_picker.dart';
 
+
+class JournalEntry {
+  String id;
+  String entry;
+  String location;
+  dynamic activities;
+  DateTime date;
+  DateTime timestamp;
+  List<String> imgUrls;
+  int views;
+
+  JournalEntry({
+    required this.id,
+    required this.entry,
+    required this.location,
+    required this.activities,
+    required this.date,
+    required this.timestamp,
+    required this.imgUrls,
+    required this.views,
+  });
+}
+
+
+
 class DBProvider extends ChangeNotifier {
   String? _userId;
   // Using a map to store journal entries with their Firebase document ID as the key
-  Map<String, Map<String, dynamic>> _journalEntries = {};
+  Map<String, JournalEntry> _journalEntries = {};
   Map<String, Map<String, dynamic>> _chapters = {};
+  List<Map<String, Object>> _journalEntryDates = [];
 
   String? get userId => _userId;
   set userId(String? id) {
@@ -20,8 +46,18 @@ class DBProvider extends ChangeNotifier {
     notifyListeners();
   }
 
-  UnmodifiableMapView<String, Map<String, dynamic>> get journalEntries =>
+  List<JournalEntry> _sortJournalList(List<JournalEntry> x){
+    final sortedList = List<JournalEntry>.from(x);
+    sortedList.sort((a, b) => b.date.compareTo(a.date));
+    return sortedList;
+  }
+
+
+  UnmodifiableMapView<String, JournalEntry> get journalEntries =>
       UnmodifiableMapView(_journalEntries);
+
+  UnmodifiableListView<JournalEntry> get journalEntriesSorted =>
+      UnmodifiableListView(_sortJournalList(_journalEntries.values.toList()));
 
   UnmodifiableMapView<String, Map<String, dynamic>> get chapters =>
       UnmodifiableMapView(_chapters);
@@ -30,13 +66,21 @@ class DBProvider extends ChangeNotifier {
 UnmodifiableListView<Map<String, dynamic>> get journalEntryDates =>
     UnmodifiableListView(
       _journalEntries.entries.map((entry) => {
-        'date': entry.value['date'],
+        'date': entry.value.date,
         'id': entry.key,
       }).toList(),
     );
 
-Map<String, dynamic>? getJournalEntryById(String entryId) {
+JournalEntry? getJournalEntryById(String entryId) {
   return _journalEntries[entryId];
+}
+
+UnmodifiableListView<JournalEntry> getJournalEntriesForDay(DateTime date) {
+  final entriesForDay = _journalEntries.values.where((entry) =>
+    entry.date.month == date.month &&
+    entry.date.day == date.day
+  ).toList();
+  return UnmodifiableListView(entriesForDay);
 }
 
   
@@ -62,33 +106,65 @@ Map<String, dynamic>? getJournalEntryById(String entryId) {
           .collection('entries')
           .get();
 
-      Map<String, Map<String, dynamic>> entriesMap = {};
-      for (var doc in snapshot.docs) {
-        // Add each entry to the map with the document ID as the key
-        entriesMap[doc.id] = {
-          'id': doc.id,
-          'entry': doc['entry'],
-          'location': doc['location'],
-          'activities': doc['activities'],
-          'date': (doc['date'] is Timestamp)
-              ? doc['date'].toDate()
-              : DateTime.parse(doc['date'].toString()), // Handle date conversion
-          'timestamp': DateTime.parse(doc['timestamp'].toString()),
-          'imgUrls': doc['imgUrls'],
-        };
-      }
-      _journalEntries = entriesMap; // Store the entries map
-      notifyListeners();
-    } catch (e) {
-      // print('Error fetching journal entries: $e');
-      rethrow;
+       Map<String, Map<String, dynamic>> entriesMap = {};
+    for (var doc in snapshot.docs) {
+      final data = doc.data();
+      entriesMap[doc.id] = {
+        'id': doc.id,
+        'entry': data['entry'],
+        'location': data['location'],
+        'activities': data['activities'],
+        'date': DateTime.parse(data['date'].toString()),
+        'timestamp': DateTime.parse(data['timestamp'].toString()),
+        'imgUrls': data['imgUrls'],
+        'views': (data['views'] as int?) ?? 0,
+      };
     }
+
+    _journalEntries = entriesMap.map((key, value) => MapEntry(
+      key,
+      JournalEntry(
+        id: value['id'],
+        entry: value['entry'],
+        location: value['location'],
+        activities: value['activities'],
+        date: value['date'],
+        timestamp: value['timestamp'],
+        imgUrls: List<String>.from(value['imgUrls'] ?? []),
+        views: value['views'] ?? 0,
+      ),
+    ));
+
+    _journalEntryDates  = _journalEntries.entries.map((entry) => {
+        'date': entry.value.date,
+        'id': entry.key,
+      }).toList();
+
+    notifyListeners();
+  } catch (e) {
+    rethrow;
   }
+}
+
+  Future<void> viewEntry(String uid, int prevView, User currentUser) async {
+
+    // TODO: Implement viewEntry functionality or remove this method if not needed.
+    await FirebaseFirestore.instance
+          .collection('users')
+          .doc(currentUser.uid)
+          .collection('entries')
+          .doc(uid)
+          .set({
+          'views': prevView + 1,
+        }, SetOptions(merge: true));
+  }
+
+
   Future<String?> _uploadPic(XFile xfile, String uid) async {
     final storageRef = FirebaseStorage.instance.ref();
     // give it a unique name, e.g. based on timestamp + original name
     final name = '${DateTime.now().millisecondsSinceEpoch}_${xfile.name}';
-    final imageRef = storageRef.child('$uid/images/$name');
+    final imageRef = storageRef.child('users/$uid/entryImages/$name');
     final metadata = SettableMetadata(contentType: 'image/jpeg');
 
     try {
@@ -103,7 +179,7 @@ Map<String, dynamic>? getJournalEntryById(String entryId) {
       return await imageRef.getDownloadURL();
     } on FirebaseException catch (e) {
       // handle/log e.code, etc.
-      print(e);
+      e;
       return null;
     }
   }
@@ -136,7 +212,6 @@ Map<String, dynamic>? getJournalEntryById(String entryId) {
       // Upload images to Firebase Storage
       if (imagePaths.isNotEmpty) {
         for (final xfile in imagePaths) {
-          print('this');
           final url = await _uploadPic(XFile(xfile), uid);
            if (url != null) cloudStorageImgUrls.add(url);
           
@@ -156,15 +231,19 @@ Map<String, dynamic>? getJournalEntryById(String entryId) {
       });
 
       // Update the entries map with the new entry
-      _journalEntries[docRef.id] = {
-        'id': docRef.id,
-        'entry': textController.text,
-        'location': locationTextController.text,
-        'activities': activities,
-        'date': selectedDate,
-        'timestamp': DateTime.now(),
-        'imgUrls': cloudStorageImgUrls,
-      };
+      _journalEntries[docRef.id] = JournalEntry(
+        id: docRef.id,
+        entry: textController.text,
+        location: locationTextController.text,
+        activities: activities,
+        date: selectedDate,
+        timestamp: DateTime.now(),
+        imgUrls: cloudStorageImgUrls,
+        views: 0,
+      );
+
+      _journalEntryDates.add({"id": docRef.id, "date": selectedDate});
+      _journalEntryDates.sort((a, b) => (b['date'] as DateTime).compareTo(a['date'] as DateTime));
       notifyListeners();
 
       if (chapterId != null) {
@@ -179,7 +258,6 @@ Map<String, dynamic>? getJournalEntryById(String entryId) {
           'lastUse': FieldValue.serverTimestamp(),
         }, SetOptions(merge: true));
     } catch (e) {
-      print('Error saving entry: $e');
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(content: Text('Failed to save entry: $e')),
       );
@@ -264,7 +342,6 @@ Map<String, dynamic>? getJournalEntryById(String entryId) {
       // print('Error fetching chapters: $e');
     }
   }
-
   // Fetch a chapter by its ID from the map
   Map<String, dynamic>? getChapterById(String chapterId) {
     return _chapters[chapterId];
