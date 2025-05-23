@@ -76,7 +76,9 @@ class _CalendarCardState extends State<CalendarCard> {
         child: Text('No entries for selected date', style: theme.textTheme.bodyMedium),
       );
     }
-    return CalendarJournalListView(entries: entries);
+    final sortedEntries = List<JournalEntry>.from(entries)
+      ..sort((a, b) => b.date.compareTo(a.date));
+    return CalendarJournalListView(entries: sortedEntries);
   }
 
   Widget _buildKey(ThemeData theme) {
@@ -144,7 +146,7 @@ class _CalendarCardState extends State<CalendarCard> {
                   if (_isToday(day)) { bg = theme.colorScheme.primaryContainer; }
                   else if (_isFavorite(day)) { bg = Colors.amber.withAlpha((0.3 * 255).toInt()); }
                   else if (_hasMultipleEntries(day)) { bg = Colors.purple.withAlpha((0.3 * 255).toInt()); }
-                  else if (_hasPastEntry(day)) { bg = Colors.green.withAlpha((0.3 * 255).toInt()); }
+                  else if (_hasPastEntry(day)) { bg = Colors.grey.shade400; }
                   return Container(
                     margin: const EdgeInsets.all(6),
                     alignment: Alignment.center,

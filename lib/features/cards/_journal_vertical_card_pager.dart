@@ -1,6 +1,7 @@
 // lib/pages/journal_vertical_pager.dart
 
 import 'package:flutter/material.dart';
+import 'package:journal/features/_fade_route.dart';
 import 'package:journal/features/cards/_recent_post_card.dart';
 import 'package:journal/pages/journal_view_page.dart';
 import 'package:journal/providers/db_provider.dart';
@@ -68,13 +69,10 @@ class _JournalVerticalPagerState extends State<JournalVerticalPager> {
                   align: ALIGN.CENTER,
                   onPageChanged: (_) {},
                   onSelectedItem: (index) {
-                    Navigator.push(
-                      context,
-                      MaterialPageRoute(
-                        builder: (_) => JournalEntryViewPage(
-                          entryId: _entries[index].id,
-                        ),
-                      ),
+                    Navigator.of(context).push(
+                      fadeRoute(JournalEntryViewPage(
+                          entryId: _entries[index].id
+                      )),
                     );
                   },
                 ),

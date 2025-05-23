@@ -1,9 +1,11 @@
 import 'package:flutter/material.dart';
+import 'package:journal/features/_fade_route.dart';
 import 'package:journal/features/calendar/_calendar_card.dart';
 import 'package:journal/pages/chapters/chapters_page.dart';
 import 'package:journal/pages/journal_entry_page.dart';
 import 'package:journal/pages/journal_recents_list.dart';
 import 'package:journal/pages/settings.dart';
+import 'package:journal/providers/theme_provider.dart';
 import 'package:journal/providers/user_provider.dart';
 import 'package:journal/theme/_colors.dart';
 import 'package:provider/provider.dart';
@@ -19,20 +21,22 @@ class HomePage extends StatefulWidget {
 }
 
 class _HomePageState extends State<HomePage> {
-  
+
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
+    final themeProv = context.watch<ThemeProvider>();
     final userProv = context.watch<UserProvider>();
     final headerUrl = userProv.headerImageUrl;
-     final screenWidth = MediaQuery.of(context).size.width;
-  final avatarSize = (screenWidth * 0.08).clamp(50.0, 64.0);
+    final screenWidth = MediaQuery.of(context).size.width;
+    final avatarSize = (screenWidth * 0.08).clamp(50.0, 64.0);
 
     return Scaffold(
       body: LayoutBuilder(
         builder: (context, constraints) {
           const basePad = 24.0;
-          final extra = (constraints.maxWidth - 900).clamp(0.0, double.infinity);
+          final extra =
+              (constraints.maxWidth - 900).clamp(0.0, double.infinity);
           final horizontalPad = basePad + (extra / 2);
 
           return CustomScrollView(
@@ -42,7 +46,7 @@ class _HomePageState extends State<HomePage> {
                 pinned: false,
                 elevation: 2,
                 expandedHeight: 250,
-                backgroundColor: Colors.white,
+                backgroundColor: themeProv.backgroundGradientColors[0],
                 flexibleSpace: FlexibleSpaceBar(
                   title: Text(
                     'Jamie\'s Journal',
@@ -53,9 +57,9 @@ class _HomePageState extends State<HomePage> {
                       fontWeight: FontWeight.bold,
                       shadows: [
                         Shadow(
-                          color: Colors.black.withOpacity(0.5),
-                          offset: const Offset(0, 1),
-                          blurRadius: 4,
+                          color: const Color.fromARGB(255, 0, 0, 0),
+                          offset: const Offset(1, 2),
+                          blurRadius: 5,
                         ),
                       ],
                     ),
@@ -65,15 +69,16 @@ class _HomePageState extends State<HomePage> {
                     fit: StackFit.expand,
                     children: [
                       headerUrl != null
-  ? Image.network(headerUrl, fit: BoxFit.cover)
-  : Image.asset('assets/images/default_header.png', fit: BoxFit.cover),
+                          ? Image.network(headerUrl, fit: BoxFit.cover)
+                          : Image.asset('assets/images/default_header.png',
+                              fit: BoxFit.cover),
 
                       // subtle overlay so toolbar text pops
                       DecoratedBox(
                         decoration: BoxDecoration(
                           gradient: LinearGradient(
                             colors: [
-                              Colors.black.withOpacity(0.4),
+                              const Color.fromARGB(30, 0, 0, 0),
                               Colors.transparent
                             ],
                             begin: Alignment.bottomCenter,
@@ -84,28 +89,27 @@ class _HomePageState extends State<HomePage> {
                     ],
                   ),
                 ),
-                 actions: [
-    // Avatar icon
-    Padding(
-      padding: const EdgeInsets.symmetric(horizontal: 8.0),
-      child: CircleAvatar(
-        radius: avatarSize / 2.25,
-        backgroundColor: const Color.fromARGB(183, 239, 239, 239),
-        child: IconButton(
-          alignment: Alignment.center,
-      icon: Icon(Icons.settings,  color: theme.colorScheme.onSurface, size: 30),
-      tooltip: 'Settings',
-      onPressed: () {
-       
-        Navigator.of(context).push(
-          MaterialPageRoute(builder: (_) => SettingsPage()),
-        );
-      },
-    ),
-      ),
-    ),
-    
-  ],
+                actions: [
+                  // Avatar icon
+                  Padding(
+                    padding: const EdgeInsets.symmetric(horizontal: 8.0),
+                    child: CircleAvatar(
+                      radius: avatarSize / 2.25,
+                      backgroundColor: const Color.fromARGB(183, 239, 239, 239),
+                      child: IconButton(
+                        alignment: Alignment.center,
+                        icon: Icon(Icons.settings,
+                            color: theme.colorScheme.onSurface, size: 30),
+                        tooltip: 'Settings',
+                        onPressed: () {
+                          Navigator.of(context).push(
+                            fadeRoute(const SettingsPage()),
+                          );
+                        },
+                      ),
+                    ),
+                  ),
+                ],
               ),
 
               // ─── Main Content ───────────────────────────────────
@@ -117,7 +121,7 @@ class _HomePageState extends State<HomePage> {
                 sliver: SliverList(
                   delegate: SliverChildListDelegate([
                     // Calendar card
-                    const CalendarCard(),
+                    CalendarCard(),
 
                     const SizedBox(height: 24),
 
@@ -128,8 +132,7 @@ class _HomePageState extends State<HomePage> {
                         child: LayoutBuilder(builder: (context, inner) {
                           const gap = 16.0;
                           const count = 3;
-                          final available =
-                              inner.maxWidth - gap * (count - 1);
+                          final available = inner.maxWidth - gap * (count - 1);
                           final side = available / count;
                           final buttons = [
                             [
@@ -149,13 +152,11 @@ class _HomePageState extends State<HomePage> {
                             return Column(
                               children: buttons.map((btn) {
                                 return Padding(
-                                  padding:
-                                      const EdgeInsets.only(bottom: gap),
+                                  padding: const EdgeInsets.only(bottom: gap),
                                   child: SizedBox(
                                     width: inner.maxWidth,
                                     height: side,
-                                    child:
-                                        _buildButton(btn, side, theme),
+                                    child: _buildButton(btn, side, theme),
                                   ),
                                 );
                               }).toList(),
@@ -163,8 +164,7 @@ class _HomePageState extends State<HomePage> {
                           }
 
                           return Row(
-                            mainAxisAlignment:
-                                MainAxisAlignment.spaceBetween,
+                            mainAxisAlignment: MainAxisAlignment.spaceBetween,
                             children: buttons.map((btn) {
                               return ConstrainedBox(
                                 constraints: BoxConstraints(
@@ -200,8 +200,10 @@ class _HomePageState extends State<HomePage> {
       borderRadius: BorderRadius.circular(12),
       child: InkWell(
         borderRadius: BorderRadius.circular(12),
-        onTap: () => Navigator.of(context)
-            .push(MaterialPageRoute(builder: (_) => btn[2] as Widget)),
+        onTap: () {
+          final target = btn[2] as Widget;
+          Navigator.of(context).push(fadeRoute(target));
+        },
         child: Container(
           padding: const EdgeInsets.all(16),
           decoration: BoxDecoration(
@@ -223,8 +225,8 @@ class _HomePageState extends State<HomePage> {
               Text(
                 btn[0] as String,
                 textAlign: TextAlign.center,
-                style: theme.textTheme.bodyMedium
-                    ?.copyWith(color: Colors.white),
+                style:
+                    theme.textTheme.bodyMedium?.copyWith(color: Colors.white),
               ),
             ],
           ),

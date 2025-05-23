@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:journal/features/_fade_route.dart';
 
 class MenuButton extends StatefulWidget {
   final List<double> boxSizeMultipliers; // [width, height]
@@ -32,9 +33,8 @@ class _MenuButtonState extends State<MenuButton> {
   bool _isPressed = false;
 
   void _navigate() {
-    Navigator.push(
-      context,
-      MaterialPageRoute(builder: (_) => widget.targetPage),
+    Navigator.of(context).push(
+      fadeRoute(widget.targetPage),
     );
   }
 

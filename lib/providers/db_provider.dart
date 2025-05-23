@@ -109,12 +109,15 @@ UnmodifiableListView<JournalEntry> getJournalEntriesForDay(DateTime date) {
        Map<String, Map<String, dynamic>> entriesMap = {};
     for (var doc in snapshot.docs) {
       final data = doc.data();
+  final parsed = DateTime.parse(data['date'].toString());
+  final dateOnly = DateTime(parsed.year, parsed.month, parsed.day);
+  
       entriesMap[doc.id] = {
         'id': doc.id,
         'entry': data['entry'],
         'location': data['location'],
         'activities': data['activities'],
-        'date': DateTime.parse(data['date'].toString()),
+        'date': dateOnly,
         'timestamp': DateTime.parse(data['timestamp'].toString()),
         'imgUrls': data['imgUrls'],
         'views': (data['views'] as int?) ?? 0,

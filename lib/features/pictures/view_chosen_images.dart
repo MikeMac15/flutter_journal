@@ -2,6 +2,7 @@ import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:flutter/foundation.dart';
 import 'package:image_picker/image_picker.dart';
+import 'package:journal/features/_fade_route.dart';
 import 'package:journal/features/pictures/full_picture_modal.dart';
 
 
@@ -62,14 +63,12 @@ class _ViewChosenImagesState extends State<ViewChosenImages> {
         itemSnapping: true,
         flexWeights: const <int>[3, 7, 3],
         onTap: (int index) {
-          Navigator.push(
-            context,
-            MaterialPageRoute(
-              builder: (context) => FullscreenImageView(
+          Navigator.of(context).push(
+            fadeRoute( FullscreenImageView(
           imageFile: XFile(widget.chosenPhotoPaths[index]),
               ),
-            ),
-          );
+              duration: const Duration(milliseconds: 600),
+            ));
         },
         children: List<Widget>.generate(widget.chosenPhotoPaths.length, (int index) {
           return Center(

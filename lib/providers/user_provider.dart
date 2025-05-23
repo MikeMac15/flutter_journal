@@ -71,14 +71,27 @@ class UserProvider extends ChangeNotifier {
 
   /// Loads the headerImageUrl from Firestore into local state
   Future<void> loadHeaderImage() async {
-    final uid = _user?.uid;
-    if (uid == null) return;
-    final doc = await FirebaseFirestore.instance.collection('users').doc(uid).get();
-    if (doc.exists && doc.data()!.containsKey('headerImageUrl')) {
-      _headerImageUrl = doc.get('headerImageUrl') as String?;
-      notifyListeners();
+  final uid = _user?.uid;
+  if (uid == null) return;
+  final doc = await FirebaseFirestore.instance
+      .collection('users')
+      .doc(uid)
+      .get();
+
+  if (doc.exists && doc.data()!.containsKey('headerImageUrl')) {
+    _headerImageUrl = doc.get('headerImageUrl') as String?;
+    notifyListeners();
+
+    if (_headerImageUrl != null) {
+      // Manually cache it using an ImageCache you fetch from the binding:
+      final provider = NetworkImage(_headerImageUrl!);
+      // Kick off an image resolve, which will cache it.
+      provider.resolve(const ImageConfiguration()).addListener(
+        ImageStreamListener((_, __) {/* nothing to do */}),
+      );
     }
   }
+}
 
   /// Prompts user to pick an image, uploads it, saves URL in Firestore & state.
   Future<void> pickAndUploadHeaderImage() async {

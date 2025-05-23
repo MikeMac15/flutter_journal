@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:journal/features/_fade_route.dart';
 import 'package:journal/pages/chapters/create_chapter_page.dart';
 import 'package:journal/providers/db_provider.dart';
 import 'package:provider/provider.dart';
@@ -30,10 +31,7 @@ class _ChaptersPageState extends State<ChaptersPage> {
 
   void navToCreateChapterPage() {
     // Navigate to the page where the user can create a new chapter
-    Navigator.push(
-      context,
-      MaterialPageRoute(builder: (context) => const CreateChapterPage()),
-    );
+    Navigator.of(context).push(fadeRoute(CreateChapterPage()));
   }
 
   @override
@@ -53,10 +51,6 @@ class _ChaptersPageState extends State<ChaptersPage> {
 
             if (snapshot.hasError) {
               return Center(child: Text('Error: ${snapshot.error}'));
-            }
-
-            if (!snapshot.hasData || snapshot.data!.isEmpty) {
-              return const Center(child: Text('No chapters available'));
             }
 
             final chapters = snapshot.data!;

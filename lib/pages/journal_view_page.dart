@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:intl/intl.dart';
 import 'package:journal/features/pictures/view_chosen_images.dart';
 import 'package:journal/pages/journal_entry/activity_list.dart';
 import 'package:journal/providers/db_provider.dart';
@@ -77,7 +78,7 @@ class JournalEntryViewPageState extends State<JournalEntryViewPage> {
                   children: [
                     // Date
                     Text(
-                      _entryDate.toString(),
+                      DateFormat.yMMMMd().format(_entryDate),
                       style: theme.textTheme.titleLarge?.copyWith(fontWeight: FontWeight.bold),
                       textAlign: TextAlign.center,
                     ),
@@ -119,7 +120,7 @@ class JournalEntryViewPageState extends State<JournalEntryViewPage> {
                           crossAxisAlignment: CrossAxisAlignment.start,
                           children: [
                             Text(
-                              'My Thoughts',
+                              'Journal Entry',
                               style: theme.textTheme.titleMedium?.copyWith(fontWeight: FontWeight.bold),
                             ),
                             const SizedBox(height: 8),

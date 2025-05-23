@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
+import 'package:journal/features/_fade_route.dart';
 
 import 'package:journal/pages/journal_view_page.dart';
 import 'package:journal/pages/journal_entry_page.dart';
@@ -10,8 +11,7 @@ import 'package:journal/providers/db_provider.dart';
 class CalendarJournalListView extends StatelessWidget {
   final List<JournalEntry> entries;
 
-  const CalendarJournalListView({Key? key, required this.entries})
-      : super(key: key);
+  const CalendarJournalListView({super.key, required this.entries});
 
   @override
   Widget build(BuildContext context) {
@@ -69,12 +69,8 @@ class CalendarJournalListView extends StatelessWidget {
                     child: InkWell(
                       borderRadius: BorderRadius.circular(12),
                       onTap: () {
-                        Navigator.push(
-                          context,
-                          MaterialPageRoute(
-                            builder: (_) =>
-                                JournalEntryViewPage(entryId: entry.id),
-                          ),
+                        Navigator.of(context).push(
+                               fadeRoute(JournalEntryViewPage(entryId: entry.id), duration: const Duration(milliseconds: 100)),
                         );
                       },
                       child: Column(
@@ -196,12 +192,10 @@ class CalendarJournalListView extends StatelessWidget {
                   final dateToUse = entries.isNotEmpty
                       ? entries.first.date
                       : DateTime.now();
-                  Navigator.push(
-                    context,
-                    MaterialPageRoute(
-                      builder: (_) => JournalEntryPage(selectedDate: dateToUse),
-                    ),
-                  );
+                  Navigator.of(context).push(
+                    fadeRoute(JournalEntryPage(selectedDate: dateToUse)),
+                    );
+                  
                 },
                 child: Container(
                   padding: const EdgeInsets.all(10),
