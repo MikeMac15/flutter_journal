@@ -27,13 +27,11 @@ class ThemeProvider extends ChangeNotifier {
       ? ColorScheme.dark(
           primary:   _primary,
           secondary: _secondary,
-          background: _background,
           surface:    _background,
         )
       : ColorScheme.light(
           primary:   _primary,
           secondary: _secondary,
-          background: _background,
           surface:    _background,
         );
 

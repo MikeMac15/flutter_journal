@@ -186,23 +186,59 @@ UnmodifiableListView<JournalEntry> getJournalEntriesForDay(DateTime date) {
       return null;
     }
   }
+//   Future<List<String>> _uploadPicsBatch(List<XFile> files, String uid) async {
+//   const int chunkSize = 4;
+//   final List<String> allUrls = [];
+
+//   for (var i = 0; i < files.length; i += chunkSize) {
+//     // Take a slice of up to 4 files
+//     final chunk = files.sublist(
+//       i,
+//       (i + chunkSize > files.length) ? files.length : i + chunkSize,
+//     );
+
+//     // Start uploads for that chunk in parallel
+//     final futures = chunk.map((xfile) => _uploadPic(xfile, uid)).toList();
+//     final results = await Future.wait(futures);
+
+//     // Keep only non-null URLs
+//     allUrls.addAll(results.whereType<String>());
+//   }
+
+//   return allUrls;
+// }
+
+//   Future<List<String>> _uploadPicsBatch(List<XFile> files, String uid) async {
+//   // 1) Map each XFile to one Future<String?> using your existing _uploadPic:
+//   final uploads = files.map((xfile) {
+//     return _uploadPic(xfile, uid);
+//   }).toList();
+
+//   // 2) Wait for all of them to finish in parallel:
+//   final results = await Future.wait(uploads);
+
+//   // 3) Filter out any nulls (failed uploads) and return only non‐null URLs:
+//   return results.whereType<String>().toList();
+// }
 
 
   Future<void> saveEntryToFirestore({
-    context,
-    currentUser,
-    chapterId,
-    activityControllers,
-    textController,
-    locationTextController,
-    selectedDate,
-    imagePaths,
+    required BuildContext context,
+    required User currentUser,
+    String? chapterId,
+    required List<Map<String, TextEditingController>> activityControllers,
+    required TextEditingController textController,
+    required TextEditingController locationTextController,
+    required DateTime selectedDate,
+    required List<String> imagePaths, // local file paths of picked images
+    // NEW:
+    void Function(int uploadedCount, int totalCount)? onProgress,
+    VoidCallback? onComplete,
   }) async {
-    if (currentUser == null) return;
-    if (currentUser == null) return;
-     final uid = currentUser!.uid;
-     List<String> cloudStorageImgUrls = [];
+    // currentUser is required and non-nullable
+    final uid = currentUser.uid;
 
+    // Build activities list
     final activities = activityControllers.map((controllerMap) {
       return {
         'name': controllerMap['name']?.text ?? '',
@@ -211,29 +247,49 @@ UnmodifiableListView<JournalEntry> getJournalEntriesForDay(DateTime date) {
     }).toList();
 
     try {
-      // print(imagePaths);
-      // Upload images to Firebase Storage
-      if (imagePaths.isNotEmpty) {
-        for (final xfile in imagePaths) {
-          final url = await _uploadPic(XFile(xfile), uid);
-           if (url != null) cloudStorageImgUrls.add(url);
-          
-        }
-      }
+      // 1) UPLOAD PHOTOS IN PARALLEL, REPORTING PROGRESS
+      final int total = imagePaths.length;
+      int uploaded = 0;
+
+      // Create a List<Future<String?>> but wrap each with a `.then(...)` that calls onProgress
+      final List<Future<String?>> uploadFutures = imagePaths.map((localPath) {
+        return _uploadPic(XFile(localPath), uid).then((url) {
+          // Each time one single upload finishes, increment & report:
+          uploaded++;
+          if (onProgress != null) {
+            if (uploaded < total) {
+              onProgress(uploaded, total); // e.g. "1/7 uploaded" … "6/7 uploaded"
+            } else {
+              // uploaded == total
+              onProgress(total, total);   // "7/7 uploaded"
+            }
+          }
+          return url; // pass along the URL (or null) for Future.wait to collect
+        });
+      }).toList();
+
+      // Wait until all finish (in parallel)
+      final List<String?> maybeUrls = await Future.wait(uploadFutures);
+      final List<String> cloudStorageImgUrls = maybeUrls.whereType<String>().toList();
+
+      // At this point, we have already called onProgress(total, total). Caller can interpret that as:
+      // "All photos uploaded. Now saving the entry…"
+
+      // 2) ADD FIRESTORE DOCUMENT IN ONE SHOT
       final docRef = await FirebaseFirestore.instance
           .collection('users')
-          .doc(currentUser!.uid)
+          .doc(uid)
           .collection('entries')
           .add({
         'entry': textController.text,
         'location': locationTextController.text,
         'activities': activities,
-        'date': selectedDate.toIso8601String(), // Store date as a field
-        'timestamp': DateTime.now().toIso8601String(), // Creation timestamp
-        'imgUrls': cloudStorageImgUrls
+        'date': selectedDate.toIso8601String(),
+        'timestamp': DateTime.now().toIso8601String(),
+        'imgUrls': cloudStorageImgUrls,
       });
 
-      // Update the entries map with the new entry
+      // 3) UPDATE LOCAL STATE
       _journalEntries[docRef.id] = JournalEntry(
         id: docRef.id,
         entry: textController.text,
@@ -241,51 +297,59 @@ UnmodifiableListView<JournalEntry> getJournalEntriesForDay(DateTime date) {
         activities: activities,
         date: selectedDate,
         timestamp: DateTime.now(),
+        // NOTE: store cloud URLs, not local file paths
         imgUrls: cloudStorageImgUrls,
         views: 0,
       );
-
-      _journalEntryDates.add({"id": docRef.id, "date": selectedDate});
-      _journalEntryDates.sort((a, b) => (b['date'] as DateTime).compareTo(a['date'] as DateTime));
+      _journalEntryDates.add({'id': docRef.id, 'date': selectedDate});
+      _journalEntryDates.sort((a, b) =>
+          (b['date'] as DateTime).compareTo(a['date'] as DateTime));
       notifyListeners();
 
+      // 4) OPTIONALLY ATTACH TO A CHAPTER
       if (chapterId != null) {
-        await attachEntryToChapter(context, chapterId, docRef.id);
+        await _attachEntryToChapter(context, chapterId, docRef.id);
       }
+
+      // 5) NAVIGATE BACK (CLOSE ANY SCREENS AS BEFORE)
       Navigator.pop(context);
 
+      // 6) UPDATE “lastUse” TIMESTAMP FOR USER
       await FirebaseFirestore.instance
-        .collection('users')
-        .doc(currentUser.uid)
-        .set({
-          'lastUse': FieldValue.serverTimestamp(),
-        }, SetOptions(merge: true));
+          .collection('users')
+          .doc(uid)
+          .set({'lastUse': FieldValue.serverTimestamp()}, SetOptions(merge: true));
+
+      // 7) CALL onComplete() TO SIGNAL “ENTRY SAVED”
+      if (onComplete != null) {
+        onComplete();
+      }
     } catch (e) {
+      // If anything fails, show a SnackBar
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(content: Text('Failed to save entry: $e')),
       );
     }
   }
+  // Future<String?> savePic(String imagePath) async {
+  //   final storageRef = FirebaseStorage.instance.ref();
+  //   File picFile = File(imagePath);
+  //   final metadata = SettableMetadata(contentType: 'image/jpeg');
+  //   final String? userId = FirebaseAuth.instance.currentUser?.uid;
+  //   if (userId == null) return null;
+  //   try {
+  //     final imageRef = storageRef.child('$userId/images');
+  //     await imageRef.putFile(picFile, metadata);
 
-  Future<String?> savePic(String imagePath) async {
-    final storageRef = FirebaseStorage.instance.ref();
-    File picFile = File(imagePath);
-    final metadata = SettableMetadata(contentType: 'image/jpeg');
-    final String? userId = FirebaseAuth.instance.currentUser?.uid;
-    if (userId == null) return null;
-    try {
-      final imageRef = storageRef.child('$userId/images');
-      await imageRef.putFile(picFile, metadata);
+  //     String downloadURL = await imageRef.getDownloadURL();
 
-      String downloadURL = await imageRef.getDownloadURL();
-
-      return downloadURL;
-    } on FirebaseException catch (e) {
-      e.toString();
-      // print("Error uploading image: $e");
-      return null;
-    }
-  }
+  //     return downloadURL;
+  //   } on FirebaseException catch (e) {
+  //     e.toString();
+  //     // print("Error uploading image: $e");
+  //     return null;
+  //   }
+  // }
 
   Future<void> saveChapter({
     required String name,
@@ -350,7 +414,7 @@ UnmodifiableListView<JournalEntry> getJournalEntriesForDay(DateTime date) {
     return _chapters[chapterId];
   }
 
-  Future<void> attachEntryToChapter(
+  Future<void> _attachEntryToChapter(
       context, String chapterId, String entryId) async {
         final uid = _userId!;
     try {

@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:journal/features/calendar/_calendar_journal_list_view.dart';
+import 'package:journal/pages/journal_entry_page.dart';
 import 'package:journal/providers/db_provider.dart';
 import 'package:provider/provider.dart';
 import 'package:table_calendar/table_calendar.dart';
@@ -16,6 +17,14 @@ class _CalendarCardState extends State<CalendarCard> {
   DateTime? _selectedDay;
 
   void _onDaySelected(DateTime selectedDay, DateTime focusedDay) {
+    if (_focusedDay == focusedDay){
+      Navigator.push(
+            context,
+            MaterialPageRoute(
+              builder: (_) => JournalEntryPage(selectedDate: focusedDay),
+            ),
+          );
+    }
     setState(() {
       _selectedDay = selectedDay;
       _focusedDay = focusedDay;

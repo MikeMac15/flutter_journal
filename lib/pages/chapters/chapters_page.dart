@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:journal/features/_fade_route.dart';
+import 'package:journal/pages/chapters/chapter_view_page.dart';
 import 'package:journal/pages/chapters/create_chapter_page.dart';
 import 'package:journal/providers/db_provider.dart';
 import 'package:provider/provider.dart';
@@ -74,44 +75,53 @@ class _ChaptersPageState extends State<ChaptersPage> {
                     itemCount: chapters.length,
                     itemBuilder: (context, index) {
                       final chapter = chapters[index];
-                      return Card(
-                        margin: const EdgeInsets.only(bottom: 16),
-                        child: Padding(
-                          padding: const EdgeInsets.all(8.0),
-                          child: Column(
-                            crossAxisAlignment: CrossAxisAlignment.start,
-                            children: [
-                              Text(
-                                chapter['name'] ?? 'No Name',
-                                style: const TextStyle(
-                                  fontSize: 20,
-                                  fontWeight: FontWeight.bold,
-                                ),
-                              ),
-                              const SizedBox(height: 8),
-                              Text(
-                                chapter['description'] ?? 'No Description',
-                                style: const TextStyle(fontSize: 16),
-                              ),
-                              const SizedBox(height: 8),
-                              if (chapter['image'] != null && chapter['image'].isNotEmpty)
-                                Padding(
-                                  padding: const EdgeInsets.all(8.0),
-                                  child: ClipRRect(
-                                    borderRadius: BorderRadius.circular(15), // Rounded corners for image
-                                    child: Image.network(
-                                      chapter['image'] ?? '',
-                                      fit: BoxFit.cover,
-                                      width: double.infinity,
-                                      height: 300, // Set height for the image
-                                    ),
-                                  ),
-                                ),
-                              const SizedBox(height: 8),
-                            ],
-                          ),
-                        ),
-                      );
+                      return GestureDetector(
+  onTap: () {
+    Navigator.of(context).push(
+      fadeRoute(
+        ChapterDetailPage(chapterId: chapter['id']),
+        duration: const Duration(milliseconds: 500),
+      ),
+    );
+  },
+  child: Card(
+    margin: const EdgeInsets.only(bottom: 16),
+    child: Padding(
+      padding: const EdgeInsets.all(8.0),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Text(
+            chapter['name'] ?? 'No Name',
+            style: const TextStyle(
+              fontSize: 20,
+              fontWeight: FontWeight.bold,
+            ),
+          ),
+          const SizedBox(height: 8),
+          Text(
+            chapter['description'] ?? 'No Description',
+            style: const TextStyle(fontSize: 16),
+          ),
+          const SizedBox(height: 8),
+          if (chapter['image'] != null && (chapter['image'] as String).isNotEmpty)
+            Padding(
+              padding: const EdgeInsets.all(8.0),
+              child: ClipRRect(
+                borderRadius: BorderRadius.circular(15),
+                child: Image.network(
+                  chapter['image'] as String,
+                  fit: BoxFit.cover,
+                  width: double.infinity,
+                  height: 200,
+                ),
+              ),
+            ),
+        ],
+      ),
+    ),
+  ),
+);
                     },
                   ),
                 ),

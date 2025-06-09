@@ -5,27 +5,46 @@ import 'package:image_picker/image_picker.dart';
 class MyImagePicker {
   final ImagePicker _picker = ImagePicker();
 
-  // pick the image
+  /// Pick a single image from gallery.
+  /// Returns the local file path, or null if the user canceled or an error occurred.
   Future<String?> pickImageFromGallery() async {
-    final XFile? image = await _picker.pickImage(source: ImageSource.gallery);
-
-    if (image != null) return image.path;
-    return null;
-  }
-
-  Future<List<String>?> pickMultipleImagesFromGallery() async {
-    final List<XFile> images = await _picker.pickMultiImage();
-    final List<String> imagePaths = [];
-    for (var image in images){
-      imagePaths.add(image.path);
+    try {
+      final XFile? image = await _picker.pickImage(
+        source: ImageSource.gallery,
+        maxWidth: 1080,
+        maxHeight: 1080,
+        imageQuality: 60,
+      );
+      return image?.path;
+    } catch (e) {
+      return null;
     }
-    // print(imagePaths);
-    return imagePaths;
   }
 
-  Future<String?> takePictureWithCamera() async {
-    final XFile? image = await _picker.pickImage(source: ImageSource.camera);
-    if (image != null) return image.path;
-    return null;
+  /// Take a picture with the camera.
+  /// Returns the local file path, or null if canceled or error.
+  Future<String?> takePicture() async {
+    try {
+      final XFile? image = await _picker.pickImage(
+        source: ImageSource.camera,
+        maxWidth: 1080,
+        maxHeight: 1080,
+        imageQuality: 60,
+      );
+      return image?.path;
+    } catch (e) {
+      return null;
+    }
+  }
+
+  /// Pick multiple images from gallery.
+  /// Returns a (possibly empty) list of file paths.
+  Future<List<String>> pickMultipleImagesFromGallery() async {
+    try {
+      final List<XFile> picked = await _picker.pickMultiImage();
+      return picked.map((xfile) => xfile.path).toList();
+    } catch (e) {
+      return [];
+    }
   }
 }

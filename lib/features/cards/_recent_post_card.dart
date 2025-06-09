@@ -12,11 +12,11 @@ class JournalPostCard extends StatefulWidget {
   final VoidCallback onViewFull;
 
   const JournalPostCard({
-    Key? key,
+    super.key,
     required this.entry,
     required this.scale,
     required this.onViewFull,
-  }) : super(key: key);
+  });
 
   @override
   _JournalPostCardState createState() => _JournalPostCardState();

@@ -7,7 +7,7 @@ import 'package:provider/provider.dart';
 /// A settings page that displays user information,
 /// allows changing the header image, and customizing app theme.
 class SettingsPage extends StatelessWidget {
-  const SettingsPage({Key? key}) : super(key: key);
+  const SettingsPage({super.key});
 
   @override
   Widget build(BuildContext context) {

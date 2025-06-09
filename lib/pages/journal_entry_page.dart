@@ -6,7 +6,7 @@ import 'package:journal/pages/journal_entry/activity_log.dart';
 import 'package:journal/pages/journal_entry/activity_list.dart';
 import 'package:journal/pages/journal_entry/chapter_selector.dart';
 import 'package:journal/pages/journal_entry/entry_date_picker.dart';
-import 'package:journal/pages/journal_entry/text_entry.dart';
+import 'package:journal/features/text/text_entry.dart';
 import 'package:journal/features/pictures/view_chosen_images.dart';
 import 'package:journal/providers/db_provider.dart';
 import 'package:provider/provider.dart';
@@ -60,8 +60,9 @@ class _JournalEntryPageState extends State<JournalEntryPage> {
 
   void _setupAuthListener() {
     FirebaseAuth.instance.authStateChanges().listen((User? user) {
-      if (!mounted)
+      if (!mounted) {
         return; // Ensure widget is still in the tree before calling setState
+      }
 
       setState(() {
         _currentUser = user;
@@ -135,7 +136,7 @@ Widget build(BuildContext context) {
   final screenHeight = MediaQuery.of(context).size.height;
 
   return Scaffold(
-    backgroundColor: theme.colorScheme.background,
+    backgroundColor: theme.colorScheme.surface,
     appBar: AppBar(
       elevation: 2,
       backgroundColor: theme.colorScheme.surface,
@@ -163,31 +164,40 @@ Widget build(BuildContext context) {
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
           // Date picker card
-          Card(
-            shape: RoundedRectangleBorder(
-              borderRadius: BorderRadius.circular(12),
-            ),
-            elevation: 3,
-            child: Padding(
-              padding: const EdgeInsets.all(12),
-              child: EntryDatePicker(
-                selectedDate: _selectedDate,
-                onDateChanged: _updateSelectedDate,
-              ),
+          Row(
+    mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+    children: [
+      // A calendar icon on the left
+      Row(
+        children: [
+          Icon(Icons.calendar_today, color: Colors.blue.shade700),
+          const SizedBox(width: 12),
+          Text(
+            "Selected Date:",
+            style: TextStyle(
+              fontSize: 18,
+              fontWeight: FontWeight.w600,
+              color: Colors.blue.shade700,
             ),
           ),
+        ],
+      ),
+
+      // Your actual EntryDatePicker on the right
+      EntryDatePicker(
+        selectedDate: _selectedDate,
+        onDateChanged: _updateSelectedDate,
+      ),
+    ],
+  ),
           const SizedBox(height: 16),
 
           // Location input
-          Text(
-            "Location",
-            style: theme.textTheme.titleMedium?.copyWith(fontWeight: FontWeight.w600),
-          ),
-          const SizedBox(height: 8),
+        
           TextEntry(
             isMultiLine: false,
             controller: _locationTextController,
-            hintText: '(optional)',
+            labelText: 'Location: (optional)',
           ),
           const SizedBox(height: 24),
 
@@ -219,21 +229,14 @@ Widget build(BuildContext context) {
           const SizedBox(height: 24),
 
           // Journal entry
-          Text(
-            "Journal Entry",
-            style: theme.textTheme.titleMedium?.copyWith(fontWeight: FontWeight.w600),
-          ),
-          const SizedBox(height: 8),
-          Container(
+          
+          SizedBox(
             height: screenHeight * 0.3,
-            decoration: BoxDecoration(
-              border: Border.all(color: theme.dividerColor),
-              borderRadius: BorderRadius.circular(8),
-            ),
+            
             child: TextEntry(
               isMultiLine: true,
               controller: _textController,
-              hintText: 'Write your thoughts here...',
+              labelText: 'Journal Entry:',
             ),
           ),
           const SizedBox(height: 24),
@@ -313,15 +316,73 @@ const SizedBox(height: 16),
 }
 
 void _saveEntry() {
-  Provider.of<DBProvider>(context, listen: false).saveEntryToFirestore(
+  // 1) Show a non-dismissible dialog with initial text "0/total photos uploaded"
+  showDialog(
     context: context,
-    currentUser: _currentUser,
-    chapterId: _selectedChapterId,
-    activityControllers: _activityControllers,
-    textController: _textController,
-    locationTextController: _locationTextController,
-    selectedDate: _selectedDate,
-    imagePaths: _chosenPhotoPaths,
+    barrierDismissible: false, // user cannot tap outside to close
+    builder: (dialogContext) {
+      // This local variable holds the text shown in the dialog
+      String progressText = '0/${_chosenPhotoPaths.length} photos uploaded';
+
+      // StatefulBuilder lets us call setState(...) inside the dialog
+      return StatefulBuilder(
+        builder: (context, setState) {
+          // Use addPostFrameCallback to run once when the dialog is built
+          WidgetsBinding.instance.addPostFrameCallback((_) {
+            // Only run saveEntryToFirestore ONCE. We check that progressText still starts with "0/"
+            if (progressText.startsWith('0/')) {
+              Provider.of<DBProvider>(context, listen: false).saveEntryToFirestore(
+                context: context,
+                currentUser: _currentUser!,
+                chapterId: _selectedChapterId,
+                activityControllers: _activityControllers,
+                textController: _textController,
+                locationTextController: _locationTextController,
+                selectedDate: _selectedDate,
+                imagePaths: _chosenPhotoPaths,
+
+                // Each time one photo finishes, this is called:
+                onProgress: (uploadedCount, totalCount) {
+                  setState(() {
+                    if (uploadedCount < totalCount) {
+                      progressText = '$uploadedCount/$totalCount photos uploaded';
+                    } else {
+                      // uploadedCount == totalCount
+                      progressText = 'All photos uploaded. Saving Journal entry.';
+                    }
+                  });
+                },
+
+                // After the Firestore write itself finishes, this is called:
+                onComplete: () {
+                  setState(() {
+                    progressText = 'Journal Entry Saved.';
+                  });
+                  // Wait a short moment so the user sees "Journal Entry Saved."
+                  Future.delayed(const Duration(milliseconds: 500), () {
+                    if (mounted) {
+                      Navigator.of(dialogContext).pop(); // close the dialog
+                    }
+                    Navigator.of(context).pop();
+                  });
+                },
+              );
+            }
+          });
+
+          // The actual dialog UI: a spinner + the changing progressText
+          return AlertDialog(
+            content: Row(
+              children: [
+                const CircularProgressIndicator(),
+                const SizedBox(width: 16),
+                Flexible(child: Text(progressText)),
+              ],
+            ),
+          );
+        },
+      );
+    },
   );
 }
 

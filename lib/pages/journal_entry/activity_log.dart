@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import 'package:journal/pages/journal_entry/text_entry.dart';
+import 'package:journal/features/text/text_entry.dart';
 
 class ActivityLog extends StatefulWidget {
   final List<Map<String, TextEditingController>> controllers;
@@ -90,7 +90,7 @@ Widget build(BuildContext context) {
                               child: TextEntry(
                                 isMultiLine: false,
                                 controller: _nameController,
-                                hintText: 'Activity Name',
+                                labelText: "Activity:",
                                 onChanged: (_) => _notifyParent(),
                               ),
                             ),
@@ -102,7 +102,7 @@ Widget build(BuildContext context) {
                           child: TextEntry(
                             isMultiLine: true,
                             controller: _descriptionController,
-                            hintText: "How'd it go?... (optional)",
+                            labelText: "Description: (optional)",
                             onChanged: (_) => _notifyParent(),
                           ),
                         ),
