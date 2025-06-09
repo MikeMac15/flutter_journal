@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:journal/features/_fade_route.dart';
 import 'package:journal/features/calendar/_calendar_card.dart';
+import 'package:journal/features/menu_buttons/top_menu_btn.dart';
 import 'package:journal/pages/chapters/chapters_page.dart';
 import 'package:journal/pages/journal_entry_page.dart';
 import 'package:journal/pages/journal_recents_list.dart';
@@ -30,7 +31,9 @@ class _HomePageState extends State<HomePage> {
     final headerUrl = userProv.headerImageUrl;
     final screenWidth = MediaQuery.of(context).size.width;
     final avatarSize = (screenWidth * 0.08).clamp(50.0, 64.0);
-
+    final firstName = userProv.userDisplayName != null
+        ? '${userProv.userDisplayName!.split(' ').first}\'s'
+        : 'My';
     return Scaffold(
       body: LayoutBuilder(
         builder: (context, constraints) {
@@ -49,7 +52,7 @@ class _HomePageState extends State<HomePage> {
                 backgroundColor: themeProv.backgroundGradientColors[0],
                 flexibleSpace: FlexibleSpaceBar(
                   title: Text(
-                    'Jamie\'s Journal',
+                    '$firstName Journal',
                     style: theme.textTheme.titleMedium?.copyWith(
                       color: Colors.white,
                       letterSpacing: 1.2,
@@ -93,21 +96,7 @@ class _HomePageState extends State<HomePage> {
                   // Avatar icon
                   Padding(
                     padding: const EdgeInsets.symmetric(horizontal: 8.0),
-                    child: CircleAvatar(
-                      radius: avatarSize / 2.25,
-                      backgroundColor: const Color.fromARGB(183, 239, 239, 239),
-                      child: IconButton(
-                        alignment: Alignment.center,
-                        icon: Icon(Icons.settings,
-                            color: theme.colorScheme.onSurface, size: 30),
-                        tooltip: 'Settings',
-                        onPressed: () {
-                          Navigator.of(context).push(
-                            fadeRoute(const SettingsPage()),
-                          );
-                        },
-                      ),
-                    ),
+                    child: HomeMenu(avatarSize: 40),
                   ),
                 ],
               ),

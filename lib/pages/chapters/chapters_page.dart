@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:journal/features/_fade_route.dart';
+import 'package:journal/features/menu_buttons/raised_button.dart';
 import 'package:journal/pages/chapters/chapter_view_page.dart';
 import 'package:journal/pages/chapters/create_chapter_page.dart';
 import 'package:journal/providers/db_provider.dart';
@@ -58,17 +59,7 @@ class _ChaptersPageState extends State<ChaptersPage> {
 
             return Column(
               children: [
-                GestureDetector(
-                  onTap: navToCreateChapterPage, // Corrected this
-                  child: Container(
-                    padding: const EdgeInsets.symmetric(vertical: 10),
-                    color: Colors.blue,
-                    child: const Text(
-                      "Create new chapter",
-                      style: TextStyle(color: Colors.white, fontSize: 16),
-                    ),
-                  ),
-                ),
+                RaiseButton(onPressed: navToCreateChapterPage, label: 'Create New Chapter'),
                 const SizedBox(height: 20),
                 Expanded(
                   child: ListView.builder(

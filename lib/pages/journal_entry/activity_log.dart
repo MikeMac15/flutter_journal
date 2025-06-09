@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:journal/features/menu_buttons/raised_button.dart';
 import 'package:journal/features/text/text_entry.dart';
 
 class ActivityLog extends StatefulWidget {
@@ -62,8 +63,9 @@ class _ActivityLogState extends State<ActivityLog> {
   @override
 Widget build(BuildContext context) {
   return Center(
-    child: ElevatedButton(
-      child: const Text('Add New Activity'),
+    child: RaiseButton(
+      label: 'Activity',
+      icon: Icons.add,
       onPressed: () {
         showModalBottomSheet<void>(
           context: context,
@@ -111,9 +113,9 @@ Widget build(BuildContext context) {
                     mainAxisAlignment: MainAxisAlignment.spaceEvenly,
                     children: [
                       
-                      ElevatedButton(
+                     RaiseButton(
                         onPressed: _saveActivity,
-                        child: const Text('Save Activity'),
+                        label: 'Save Activity',
                       ),
                     ],
                   ),

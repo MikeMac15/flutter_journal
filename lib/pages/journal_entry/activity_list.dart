@@ -28,7 +28,7 @@ Widget build(BuildContext context) {
   return ConstrainedBox(
     constraints: BoxConstraints(maxHeight: maxListHeight),
     child: ListView.builder(
-      padding: const EdgeInsets.symmetric(vertical: 8),
+      padding: const EdgeInsets.symmetric(vertical: 4),
       itemCount: savedActivities.length,
       itemBuilder: (context, index) {
         final entry = savedActivities[index];
