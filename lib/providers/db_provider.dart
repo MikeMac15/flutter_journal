@@ -7,6 +7,7 @@ import 'package:firebase_storage/firebase_storage.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:image_picker/image_picker.dart';
+import 'package:journal/features/ranked_list_memories/ranked_list_class.dart';
 
 
 class JournalEntry {
@@ -39,7 +40,8 @@ class DBProvider extends ChangeNotifier {
   Map<String, JournalEntry> _journalEntries = {};
   Map<String, Map<String, dynamic>> _chapters = {};
   List<Map<String, Object>> _journalEntryDates = [];
-
+  List<RankedListClass> _rankedLists = [];
+  List<RankedListClass> get rankedLists => _rankedLists;
   String? get userId => _userId;
   set userId(String? id) {
     _userId = id;
@@ -94,6 +96,7 @@ UnmodifiableListView<JournalEntry> getJournalEntriesForDay(DateTime date) {
     _userId = user.uid;
     // print('################## INITIALIZING DB PROVIDER ##################');
     await fetchJournalEntrySnapshot(); // Fetch journal entries when the provider is initialized
+    await fetchAllRankedLists(); // Fetch ranked lists when the provider is initialized
     await loadChapters();
   }
 
@@ -186,41 +189,6 @@ UnmodifiableListView<JournalEntry> getJournalEntriesForDay(DateTime date) {
       return null;
     }
   }
-//   Future<List<String>> _uploadPicsBatch(List<XFile> files, String uid) async {
-//   const int chunkSize = 4;
-//   final List<String> allUrls = [];
-
-//   for (var i = 0; i < files.length; i += chunkSize) {
-//     // Take a slice of up to 4 files
-//     final chunk = files.sublist(
-//       i,
-//       (i + chunkSize > files.length) ? files.length : i + chunkSize,
-//     );
-
-//     // Start uploads for that chunk in parallel
-//     final futures = chunk.map((xfile) => _uploadPic(xfile, uid)).toList();
-//     final results = await Future.wait(futures);
-
-//     // Keep only non-null URLs
-//     allUrls.addAll(results.whereType<String>());
-//   }
-
-//   return allUrls;
-// }
-
-//   Future<List<String>> _uploadPicsBatch(List<XFile> files, String uid) async {
-//   // 1) Map each XFile to one Future<String?> using your existing _uploadPic:
-//   final uploads = files.map((xfile) {
-//     return _uploadPic(xfile, uid);
-//   }).toList();
-
-//   // 2) Wait for all of them to finish in parallel:
-//   final results = await Future.wait(uploads);
-
-//   // 3) Filter out any nulls (failed uploads) and return only non‐null URLs:
-//   return results.whereType<String>().toList();
-// }
-
 
   Future<void> saveEntryToFirestore({
     required BuildContext context,
@@ -285,7 +253,7 @@ UnmodifiableListView<JournalEntry> getJournalEntriesForDay(DateTime date) {
         'location': locationTextController.text,
         'activities': activities,
         'date': selectedDate.toIso8601String(),
-        'timestamp': DateTime.now().toIso8601String(),
+        'timestamp': Timestamp.now(),
         'imgUrls': cloudStorageImgUrls,
       });
 
@@ -296,7 +264,7 @@ UnmodifiableListView<JournalEntry> getJournalEntriesForDay(DateTime date) {
         location: locationTextController.text,
         activities: activities,
         date: selectedDate,
-        timestamp: DateTime.now(),
+        timestamp: Timestamp.now().toDate(),
         // NOTE: store cloud URLs, not local file paths
         imgUrls: cloudStorageImgUrls,
         views: 0,
@@ -331,25 +299,7 @@ UnmodifiableListView<JournalEntry> getJournalEntriesForDay(DateTime date) {
       );
     }
   }
-  // Future<String?> savePic(String imagePath) async {
-  //   final storageRef = FirebaseStorage.instance.ref();
-  //   File picFile = File(imagePath);
-  //   final metadata = SettableMetadata(contentType: 'image/jpeg');
-  //   final String? userId = FirebaseAuth.instance.currentUser?.uid;
-  //   if (userId == null) return null;
-  //   try {
-  //     final imageRef = storageRef.child('$userId/images');
-  //     await imageRef.putFile(picFile, metadata);
-
-  //     String downloadURL = await imageRef.getDownloadURL();
-
-  //     return downloadURL;
-  //   } on FirebaseException catch (e) {
-  //     e.toString();
-  //     // print("Error uploading image: $e");
-  //     return null;
-  //   }
-  // }
+  
 
   Future<void> saveChapter({
     required String name,
@@ -444,4 +394,87 @@ UnmodifiableListView<JournalEntry> getJournalEntriesForDay(DateTime date) {
       );
     }
   }
+
+
+  Future<void> fetchAllRankedLists() async {
+    if (_userId == null) {
+      throw StateError('DBProvider: User ID is not set.');
+    }
+    try {
+      final snapshot = await FirebaseFirestore.instance
+          .collection('users')
+          .doc(_userId)
+          .collection('rankedLists')
+          .get();
+
+      // Map each document into your model
+        final userRankedLists = snapshot.docs.map((doc) {
+        final data = doc.data();
+        return RankedListClass(
+          title: data['title'] as String,
+          topFive: List<String>.from(data['topFive'] ?? []),
+          relatedMemories: List<String>.from(data['relatedMemories'] ?? []),
+        );
+      }).toList();
+
+      _rankedLists = userRankedLists;
+      notifyListeners();
+    } catch (e) {
+      // You might log or rethrow
+      debugPrint('Error fetching ranked lists: $e');
+      rethrow;
+    }
+  }
+  Future<void> addRankedList(RankedListClass rankedList) async {
+    if (_userId == null) {
+      throw StateError('DBProvider: User ID is not set.');
+    }
+    try {
+      final docRef = await FirebaseFirestore.instance
+          .collection('users')
+          .doc(_userId)
+          .collection('rankedLists')
+          .add({
+        'title': rankedList.title,
+        'topFive': rankedList.topFive,
+        'relatedMemories': rankedList.relatedMemories,
+      });
+
+      // Add the new RankedListClass to the local list
+      _rankedLists.add(rankedList);
+      notifyListeners();
+    } catch (e) {
+      debugPrint('///////////////////////////////////////////////////  Error adding ranked list: $e');
+      rethrow;
+    }
+  }
+  Future<void> updateRankedList(RankedListClass rankedList) async {
+    if (_userId == null) {
+      throw StateError('DBProvider: User ID is not set.');
+    }
+    try {
+      final docRef = FirebaseFirestore.instance
+          .collection('users')
+          .doc(_userId)
+          .collection('ranked_lists')
+          .doc(rankedList.title); // Assuming title is unique for each ranked list
+
+      await docRef.update({
+        'topFive': rankedList.topFive,
+        'relatedMemories': rankedList.relatedMemories,
+        'updatedAt': FieldValue.serverTimestamp(),
+      });
+
+      // Update the local list
+      final index = _rankedLists.indexWhere((list) => list.title == rankedList.title);
+      if (index != -1) {
+        _rankedLists[index] = rankedList;
+        notifyListeners();
+      }
+    } catch (e) {
+      debugPrint('Error updating ranked list: $e');
+      rethrow;
+    }
+  }
+
 }

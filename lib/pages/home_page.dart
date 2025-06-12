@@ -28,8 +28,8 @@ class _HomePageState extends State<HomePage> {
     final themeProv = context.watch<ThemeProvider>();
     final userProv = context.watch<UserProvider>();
     final headerUrl = userProv.headerImageUrl;
-    final screenWidth = MediaQuery.of(context).size.width;
-    final avatarSize = (screenWidth * 0.08).clamp(50.0, 64.0);
+    // final screenWidth = MediaQuery.of(context).size.width;
+    // final avatarSize = (screenWidth * 0.08).clamp(50.0, 64.0);
     final firstName = userProv.userDisplayName != null
         ? '${userProv.userDisplayName!.split(' ').first}\'s'
         : 'My';

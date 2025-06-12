@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:journal/features/_fade_route.dart';
 import 'package:journal/features/menu_buttons/image_button.dart';
 import 'package:journal/features/questionWalls/year_in_review_questions_page.dart';
+import 'package:journal/features/ranked_list_memories/ranked_list_home.dart';
 
 /// A layout page that shows a centered large button
 /// and a scrollable horizontal list of small cards.
@@ -10,11 +11,18 @@ class QuestionsHome extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final largeButton = {
+    final largeButtons = [{
       'title': 'Year in Review',
       'page': const YearInReviewQuestionsPage(),
       'asset': 'assets/images/questions/yearInReview.png',
-    };
+    },
+    {
+      'title': 'Ranked Lists',
+      'page': const RankedListHome(),
+      'asset': 'assets/images/questions/yearInReview.png',
+    },
+    
+    ];
 
     final smallCards = [
       {
@@ -61,10 +69,20 @@ class QuestionsHome extends StatelessWidget {
               SizedBox(
                 width: MediaQuery.of(context).size.width * 0.8,
                 child: LargeImageButton(
-                  title: largeButton['title'] as String,
-                  backgroundImage: AssetImage(largeButton['asset'] as String),
+                  title: largeButtons[0]['title'] as String,
+                  backgroundImage: AssetImage(largeButtons[0]['asset'] as String),
                   onPressed: () => Navigator.of(context).push(
-                    fadeRoute(largeButton['page'] as Widget),
+                    fadeRoute(largeButtons[0]['page'] as Widget),
+                  ),
+                ),
+              ),
+              SizedBox(
+                width: MediaQuery.of(context).size.width * 0.8,
+                child: LargeImageButton(
+                  title: largeButtons[1]['title'] as String,
+                  backgroundImage: AssetImage(largeButtons[1]['asset'] as String),
+                  onPressed: () => Navigator.of(context).push(
+                    fadeRoute(largeButtons[1]['page'] as Widget),
                   ),
                 ),
               ),

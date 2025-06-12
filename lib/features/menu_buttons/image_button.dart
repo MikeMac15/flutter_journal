@@ -11,13 +11,13 @@ class LargeImageButton extends StatelessWidget {
   final double borderRadius;
 
   const LargeImageButton({
-    Key? key,
+    super.key,
     required this.title,
     required this.onPressed,
     required this.backgroundImage,
     this.height = 120,
     this.borderRadius = 16,
-  }) : super(key: key);
+  });
 
   @override
   Widget build(BuildContext context) {
