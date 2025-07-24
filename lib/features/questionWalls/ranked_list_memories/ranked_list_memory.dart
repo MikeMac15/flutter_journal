@@ -1,8 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:journal/features/_fade_route.dart';
-import 'package:journal/features/ranked_list_memories/_all_event_list.dart';
-import 'package:journal/features/ranked_list_memories/_top_5_list.dart';
-import 'package:journal/features/ranked_list_memories/ranked_list_class.dart';
+import 'package:journal/features/menu_buttons/raised_button.dart';
+import 'package:journal/features/questionWalls/ranked_list_memories/_memory_entries_list.dart';
+import 'package:journal/features/questionWalls/ranked_list_memories/_top_5_list.dart';
+import 'package:journal/features/questionWalls/ranked_list_memories/ranked_list_class.dart';
 import 'package:journal/pages/journal_view_page.dart';
 import 'package:journal/providers/db_provider.dart';
 import 'package:provider/provider.dart';
@@ -30,20 +31,21 @@ class _RankedListMemoryState extends State<RankedListMemoryWall> {
       ),
       body: Padding(
         padding: const EdgeInsets.all(16.0),
-        child: Column(
+        child: Flexible(child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
+            Flexible(child:
             const Text(
               'Top 5:',
               style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
-            ),
+            )),
             const SizedBox(height: 8),
             TopFiveListView(
               topFive: widget.rankedList.topFive),
             const SizedBox(height: 12),
-            ElevatedButton.icon(
-              icon: const Icon(Icons.add),
-              label: const Text('Add to Top 5'),
+            RaiseButton(
+              icon: Icons.add,
+              label: 'Add to Top 5',
               onPressed: () {
                 showDialog(
                   context: context,
@@ -66,13 +68,13 @@ class _RankedListMemoryState extends State<RankedListMemoryWall> {
                       child: const Text('Cancel'),
                     ),
                     ElevatedButton(
-                      onPressed: () {
-                      if (text.trim().isNotEmpty) {
-                        setState(() {
-                        widget.rankedList.topFive.add(text.trim());
-                        });
-                        Navigator.of(context).pop();
-                      }
+                      onPressed: () async {
+                        if (text.trim().isNotEmpty) {
+                          widget.rankedList.topFive.removeLast();
+                          List<String> newTop5 = await widget.rankedList.adjustTopFive([...widget.rankedList.topFive, text.trim()]);
+                          widget.rankedList.topFive = newTop5;
+                          Navigator.of(context).pop();
+                        }
                       },
                       child: const Text('Add'),
                     ),
@@ -102,6 +104,6 @@ class _RankedListMemoryState extends State<RankedListMemoryWall> {
           ],
         ),
       ),
-    );
+    ));
   }
 }

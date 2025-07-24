@@ -75,7 +75,8 @@ class MyApp extends StatelessWidget {
           end: Alignment.bottomCenter,
         ),
       ),
-      child: child,
+      child: 
+      child
     );
   },
   home: loggedIn ? const HomePage() : const LoginPage(),

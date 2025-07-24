@@ -39,12 +39,12 @@ class MyImagePicker {
 
   /// Pick multiple images from gallery.
   /// Returns a (possibly empty) list of file paths.
-  Future<List<String>> pickMultipleImagesFromGallery() async {
-    try {
-      final List<XFile> picked = await _picker.pickMultiImage();
-      return picked.map((xfile) => xfile.path).toList();
-    } catch (e) {
-      return [];
-    }
+  Future<List<XFile>> pickMultipleImagesFromGallery() async {
+  try {
+    return await _picker.pickMultiImage();
+  } catch (e) {
+    return [];
   }
+}
+
 }

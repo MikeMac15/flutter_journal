@@ -32,27 +32,27 @@ class RankedListClass {
     return buffer.toString();
   }
 
-  Future<void> adjustTopFive(List<String> newTopFive) async {
+  Future<List<String>> adjustTopFive(List<String> newTopFive) async {
     topFive.clear();
     topFive.addAll(newTopFive);
 
     final docRef = FirebaseFirestore.instance
         .collection('users')
         .doc(userId)
-        .collection('ranked_lists')
+        .collection('rankedLists')
         .doc(title); // Assuming title is unique for each ranked list
       await docRef.update({
         'topFive': topFive,
         'updatedAt': Timestamp.now(),
       });
-
+    return topFive;
   }
 
   Future<void> addRelatedMemory(String memoryFirestoreID) async {
   final docRef = FirebaseFirestore.instance
       .collection('users')
       .doc(userId)
-      .collection('ranked_lists')
+      .collection('rankedLists')
       .doc(title);
 
   docRef.update({
@@ -66,7 +66,7 @@ class RankedListClass {
     final docRef = FirebaseFirestore.instance
         .collection('users')
         .doc(userId)
-        .collection('ranked_lists')
+        .collection('rankedLists')
         .doc(title);
     docRef.update({
       'relatedMemories': FieldValue.arrayRemove([memoryFirestoreID]),

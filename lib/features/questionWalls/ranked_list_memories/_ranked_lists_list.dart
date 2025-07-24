@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
-import 'package:journal/features/ranked_list_memories/ranked_list_class.dart';
+import 'package:journal/features/menu_buttons/image_button.dart';
+import 'package:journal/features/questionWalls/ranked_list_memories/ranked_list_class.dart';
 
 /// A reusable widget that displays a list of [RankedListClass]s.
 ///
@@ -34,6 +35,13 @@ class RankedListsList extends StatelessWidget {
       separatorBuilder: (_, __) => const Divider(height: 1),
       itemBuilder: (context, index) {
         final rl = rankedLists[index];
+        if (rl.title == 'Concerts'){
+          return LargeImageButton(
+            title: rl.title,
+            onPressed: onTap != null ? () => onTap!(rl) : () {},
+            backgroundImage: const AssetImage('assets/images/questions/concert1.png'),
+          );
+        }
         return Card(
           margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 6),
           elevation: 2,

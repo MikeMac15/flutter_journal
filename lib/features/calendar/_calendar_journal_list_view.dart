@@ -62,7 +62,10 @@ class CalendarJournalListView extends StatelessWidget {
 
                 return SizedBox(
                   width: 200,
+                  height: 260,
                   child: Card(
+                    shadowColor: Colors.grey.shade600,
+                    surfaceTintColor: Colors.white10,
                     shape: RoundedRectangleBorder(
                         borderRadius: BorderRadius.circular(12)),
                     elevation: 2,
@@ -91,15 +94,16 @@ class CalendarJournalListView extends StatelessWidget {
                                       )
                                     : Container(
                                         height: 140,
+                                        width: double.infinity,
                                         decoration: BoxDecoration(
-                                          color: Colors.grey.shade300,
+                                          // color: Colors.grey.shade300,
                                           borderRadius:
                                               const BorderRadius.vertical(
                                                   top: Radius.circular(12)),
                                         ),
                                         child: const Icon(
-                                          Icons.image_not_supported,
-                                          size: 32,
+                                          Icons.auto_stories,
+                                          size: 60,
                                         ),
                                       ),
                               ),

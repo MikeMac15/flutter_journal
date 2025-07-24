@@ -69,7 +69,7 @@ class ChapterDetailPage extends StatelessWidget {
                 child: Image.network(
                   chapterImageUrl,
                   fit: BoxFit.cover,
-                  height: 200,
+                  height: MediaQuery.of(context).size.height * 0.35, // 60% of screen width
                   width: double.infinity,
                   loadingBuilder: (ctx, child, progress) {
                     if (progress == null) return child;

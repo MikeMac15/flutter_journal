@@ -6,9 +6,8 @@ import 'package:journal/features/_fade_route.dart';
 import 'package:journal/features/pictures/full_picture_modal.dart';
 
 class ViewChosenImages extends StatefulWidget {
-  final List<String> chosenPhotoPaths;
-
-  const ViewChosenImages({super.key, required this.chosenPhotoPaths});
+  final List<Object> chosenPhotos; // can be XFile or String
+  const ViewChosenImages({super.key, required this.chosenPhotos});
 
   @override
   State<ViewChosenImages> createState() => _ViewChosenImagesState();
@@ -24,6 +23,7 @@ class _ViewChosenImagesState extends State<ViewChosenImages> {
   }
 
   Widget _buildImage(XFile xfile) {
+
     if (kIsWeb) {
       return FutureBuilder<Uint8List>(
         future: xfile.readAsBytes(),
@@ -51,11 +51,18 @@ class _ViewChosenImagesState extends State<ViewChosenImages> {
 
   @override
   Widget build(BuildContext context) {
+
+    final List<XFile> xFiles = widget.chosenPhotos.map((item) {
+      if (item is XFile) return item;
+      if (item is String) return XFile(item);
+      throw Exception('Invalid photo type: $item');
+    }).toList();
+
     final double height = MediaQuery.of(context).size.height;
 
     // If you want equal “flex weight” for every image, do this:
     final List<int> equalWeights =
-        List<int>.filled(widget.chosenPhotoPaths.length, 1);
+        List<int>.filled(xFiles.length, 1);
 
     return ConstrainedBox(
       constraints: BoxConstraints(maxHeight: height / 2),
@@ -74,14 +81,14 @@ class _ViewChosenImagesState extends State<ViewChosenImages> {
           Navigator.of(context).push(
             fadeRoute(
               FullscreenImageView(
-                imageFile: XFile(widget.chosenPhotoPaths[index]),
+                imageFile: xFiles[index],
               ),
               duration: const Duration(milliseconds: 600),
             ),
           );
         },
         children: List<Widget>.generate(
-          widget.chosenPhotoPaths.length,
+          xFiles.length,
           (int index) {
             return Center(
               child: Container(
@@ -96,7 +103,7 @@ class _ViewChosenImagesState extends State<ViewChosenImages> {
                   ],
                 ),
                 child: _buildImage(
-                  XFile(widget.chosenPhotoPaths[index]),
+                  xFiles[index],
                 ),
               ),
             );

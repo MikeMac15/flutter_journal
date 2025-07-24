@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 class ActivityList extends StatelessWidget {
-  final List<Map<String, dynamic>> savedActivities;
+  final List<dynamic> savedActivities;
   final void Function(int)? onDelete;
 
   const ActivityList({

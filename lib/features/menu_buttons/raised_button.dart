@@ -22,8 +22,9 @@ class RaiseButton extends StatelessWidget {
   /// Elevation for the shadow effect
   final double elevation;
 
+  final fontSize = 16.0;
 
-  const RaiseButton({
+const RaiseButton({
     super.key,
     required this.onPressed,
     required this.label,
@@ -36,18 +37,40 @@ class RaiseButton extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
+    
+    final isDark = theme.brightness == Brightness.dark;
+
     return Material(
       elevation: elevation,
       borderRadius: BorderRadius.circular(borderRadius),
+      color: Colors.transparent,
       child: Ink(
+        width: double.infinity,
         decoration: BoxDecoration(
-          gradient: LinearGradient(
-            colors: [
-              theme.colorScheme.primary,
-              theme.colorScheme.secondary,
-            ],
-            begin: Alignment.topLeft,
-            end: Alignment.bottomRight,
+          color: isDark
+              ? Colors.black.withOpacity(.5)
+              : Colors.white.withOpacity(0.5), // semi-transparent base
+          gradient: RadialGradient(
+  center: Alignment.center,
+  radius: 5, // Controls spread – tweak for visual effect
+  colors: isDark
+      ? [
+          Colors.grey[800]!,
+          Colors.grey[900]!,
+          
+        ]
+      : [
+          Colors.white,
+          Colors.grey[100]!,
+          
+        ],
+  
+),
+          border: Border.all(
+            color: isDark
+                ? Colors.black.withOpacity(0.4) // subtle border
+                : Colors.white.withOpacity(0.4),
+            width: 1.2,
           ),
           borderRadius: BorderRadius.circular(borderRadius),
         ),
@@ -61,15 +84,14 @@ class RaiseButton extends StatelessWidget {
               mainAxisAlignment: MainAxisAlignment.center,
               children: [
                 if (icon != null) ...[
-                  Icon(icon, color: Colors.white),
+                  Icon(icon, size: fontSize + 6, ),
                   const SizedBox(width: 8),
                 ],
                 Text(
                   label,
-                  style: const TextStyle(
-                    color: Colors.white,
-                    fontSize: 16.0,
+                  style: theme.textTheme.labelLarge?.copyWith(
                     fontWeight: FontWeight.w600,
+                    fontSize: fontSize,
                   ),
                 ),
               ],
@@ -80,6 +102,7 @@ class RaiseButton extends StatelessWidget {
     );
   }
 }
+
 
 // Example usage:
 // RaiseButton(

@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
 import 'package:journal/features/pictures/view_chosen_images.dart';
 import 'package:journal/pages/journal_entry/activity_list.dart';
+import 'package:journal/pages/journal_view/entry_editor.dart';
 import 'package:journal/providers/db_provider.dart';
 import 'package:provider/provider.dart';
 
@@ -16,88 +17,29 @@ class JournalEntryViewPage extends StatefulWidget {
 }
 
 class JournalEntryViewPageState extends State<JournalEntryViewPage> {
-  late String _entry;
-  late String _location;
-  late List<String> _imgUrls;
-  late List<Map<String, dynamic>> _activities;
-  late DateTime _entryDate;
-
-  @override
-  void initState() {
-    super.initState();
-    _loadEntryData();
-  }
-
-  void _loadEntryData() {
-    final entryData = Provider.of<DBProvider>(context, listen: false)
-        .getJournalEntryById(widget.entryId);
-
-    if (entryData != null) {
-      setState(() {
-        _entry = entryData.entry;
-        _location = entryData.location;
-        _imgUrls = entryData.imgUrls;
-        _activities = (entryData.activities as List)
-            .map((e) => Map<String, dynamic>.from(e as Map))
-            .toList();
-        _entryDate = entryData.date;
-      });
-    } else {
-      setState(() {
-        _entry = 'Entry not found';
-        _location = '';
-        _imgUrls = [];
-        _activities = [];
-        _entryDate = DateTime.now();
-      });
+    Future<void> _refreshEntryData() async {
+      // Trigger a re-fetch of the entry data
+      final dbProvider = Provider.of<DBProvider>(context, listen: false);
+      await dbProvider.fetchUpdatedEntry(widget.entryId);
     }
-  }
-
-  Future<void> _saveEdits(
-      String newEntry, String newLocation, DateTime newDate) async {
-    // Update Firestore
-    final uid = Provider.of<DBProvider>(context, listen: false).userId;
-    final docRef = FirebaseFirestore.instance
-        .collection('users')
-        .doc(uid)
-        .collection('entries')
-        .doc(widget.entryId);
-
-    try {
-      await docRef.update({
-        'entry': newEntry,
-        'location': newLocation,
-        'date': newDate.toIso8601String(),
-      });
-
-      // Update local state
-      setState(() {
-        _entry = newEntry;
-        _location = newLocation;
-        _entryDate = newDate;
-      });
-
-      if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text('Journal entry updated')),
-        );
-      }
-    } catch (e) {
-      if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('Failed to update: $e')),
-        );
-      }
-    }
-  }
-
   @override
   Widget build(BuildContext context) {
+
+    final entryData = Provider.of<DBProvider>(context, listen: true)
+        .getJournalEntryById(widget.entryId);
+
     final theme = Theme.of(context);
     final maxWidth = MediaQuery.of(context).size.width > 600
         ? 600.0
         : MediaQuery.of(context).size.width;
     final imageHeight = MediaQuery.of(context).size.height * 0.25;
+
+    if (entryData == null) {
+      return Scaffold(
+        appBar: AppBar(title: const Text('Journal Entry')),
+        body: const Center(child: Text('Entry not found')),
+      );
+    }
 
     return Scaffold(
       appBar: AppBar(
@@ -114,7 +56,7 @@ class JournalEntryViewPageState extends State<JournalEntryViewPage> {
               children: [
                 // Date
                 Text(
-                  DateFormat.yMMMMd().format(_entryDate),
+                  DateFormat.yMMMMd().format(entryData.date),
                   style: theme.textTheme.titleLarge
                       ?.copyWith(fontWeight: FontWeight.bold),
                   textAlign: TextAlign.center,
@@ -135,8 +77,8 @@ class JournalEntryViewPageState extends State<JournalEntryViewPage> {
                         const SizedBox(width: 8),
                         Expanded(
                           child: Text(
-                            _location.isNotEmpty
-                                ? _location
+                            entryData.location.isNotEmpty
+                                ? entryData.location
                                 : 'No location set',
                             style: theme.textTheme.bodyLarge,
                           ),
@@ -165,7 +107,7 @@ class JournalEntryViewPageState extends State<JournalEntryViewPage> {
                         ),
                         const SizedBox(height: 8),
                         Text(
-                          _entry,
+                          entryData.entry,
                           style: theme.textTheme.bodyMedium,
                         ),
                       ],
@@ -175,7 +117,9 @@ class JournalEntryViewPageState extends State<JournalEntryViewPage> {
                 const SizedBox(height: 16),
 
                 // Activities Card
-                Card(
+                entryData.activities.isEmpty
+                    ?  const SizedBox.shrink()
+                    : Card(
                   elevation: 2,
                   shape: RoundedRectangleBorder(
                     borderRadius: BorderRadius.circular(12),
@@ -191,8 +135,9 @@ class JournalEntryViewPageState extends State<JournalEntryViewPage> {
                               ?.copyWith(fontWeight: FontWeight.bold),
                         ),
                         const SizedBox(height: 8),
-                        _activities.isNotEmpty
-                            ? ActivityList(savedActivities: _activities)
+                        entryData.activities.isNotEmpty
+                            ? ActivityList(
+                                savedActivities: entryData.activities)
                             : Text(
                                 'No activities for this entry',
                                 style: theme.textTheme.bodyMedium,
@@ -220,11 +165,11 @@ class JournalEntryViewPageState extends State<JournalEntryViewPage> {
                               ?.copyWith(fontWeight: FontWeight.bold),
                         ),
                         const SizedBox(height: 8),
-                        _imgUrls.isNotEmpty
+                        entryData.imgUrls.isNotEmpty
                             ? SizedBox(
                                 height: imageHeight,
-                                child:
-                                    ViewChosenImages(chosenPhotoPaths: _imgUrls),
+                                child: ViewChosenImages(
+                                    chosenPhotos: entryData.imgUrls),
                               )
                             : Text(
                                 'No images for this entry',
@@ -236,115 +181,15 @@ class JournalEntryViewPageState extends State<JournalEntryViewPage> {
                 ),
                 const SizedBox(height: 24),
 
-                // ← New “Edit Entry” button ↓
-                ElevatedButton.icon(
-                  icon: const Icon(Icons.edit),
-                  label: const Text('Edit Entry'),
-                  style: ElevatedButton.styleFrom(
-                    padding: const EdgeInsets.symmetric(vertical: 12),
-                    shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(8),
-                    ),
-                  ),
-                  onPressed: () {
-                    // 1) Pre-fill controllers and date
-                    final entryController =
-                        TextEditingController(text: _entry);
-                    final locationController =
-                        TextEditingController(text: _location);
-                    DateTime newDate = _entryDate;
-
-                    showDialog(
-                      context: context,
-                      barrierDismissible: false,
-                      builder: (dialogCtx) {
-                        return StatefulBuilder(
-                          builder: (context, setState) {
-                            return AlertDialog(
-                              title: const Text('Edit Journal Entry'),
-                              content: SingleChildScrollView(
-                                child: Column(
-                                  mainAxisSize: MainAxisSize.min,
-                                  children: [
-                                    // ----- Date Picker Row -----
-                                    ListTile(
-                                      contentPadding: EdgeInsets.zero,
-                                      leading: const Icon(
-                                          Icons.calendar_today),
-                                      title: Text(
-                                        DateFormat.yMMMd().format(newDate),
-                                        style: const TextStyle(fontSize: 16),
-                                      ),
-                                      onTap: () async {
-                                        final picked = await showDatePicker(
-                                          context: context,
-                                          initialDate: newDate,
-                                          firstDate: DateTime(2000),
-                                          lastDate: DateTime(2100),
-                                        );
-                                        if (picked != null &&
-                                            picked != newDate) {
-                                          setState(() {
-                                            newDate = picked;
-                                          });
-                                        }
-                                      },
-                                    ),
-                                    const SizedBox(height: 12),
-
-                                    // ----- Entry Text Field -----
-                                    TextField(
-                                      controller: entryController,
-                                      maxLines: null,
-                                      decoration: const InputDecoration(
-                                        labelText: 'Entry Text',
-                                        border: OutlineInputBorder(),
-                                      ),
-                                    ),
-                                    const SizedBox(height: 12),
-
-                                    // ----- Location Text Field -----
-                                    TextField(
-                                      controller: locationController,
-                                      decoration: const InputDecoration(
-                                        labelText: 'Location',
-                                        border: OutlineInputBorder(),
-                                      ),
-                                    ),
-                                  ],
-                                ),
-                              ),
-                              actions: [
-                                TextButton(
-                                  onPressed: () {
-                                    Navigator.of(dialogCtx)
-                                        .pop(); // Cancel editing
-                                  },
-                                  child: const Text('Cancel'),
-                                ),
-                                ElevatedButton(
-                                  onPressed: () async {
-                                    final newEntry =
-                                        entryController.text.trim();
-                                    final newLocation =
-                                        locationController.text.trim();
-
-                                    // Save edits including the date
-                                    await _saveEdits(
-                                        newEntry, newLocation, newDate);
-
-                                    Navigator.of(dialogCtx)
-                                        .pop(); // Close dialog
-                                  },
-                                  child: const Text('Save'),
-                                ),
-                              ],
-                            );
-                          },
-                        );
-                      },
-                    );
-                  },
+                // Editor for editing the entry
+                EntryEditor(
+                  entryId: widget.entryId,
+                  onEntryUpdated: _refreshEntryData, // Triggers re-fetch after edit
+                  entry: entryData.entry,
+                  location: entryData.location,
+                  entryDate: entryData.date,
+                  imgUrls: entryData.imgUrls,
+                  activities: entryData.activities,
                 ),
 
                 const SizedBox(height: 24),

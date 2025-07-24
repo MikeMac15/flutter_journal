@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:firebase_auth/firebase_auth.dart';
+import 'package:flutter_image_compress/flutter_image_compress.dart';
 import 'package:journal/features/menu_buttons/raised_button.dart';
 
 // import 'package:journal/pages/errors/auth_error_page.dart';
@@ -32,7 +33,8 @@ class _JournalEntryPageState extends State<JournalEntryPage> {
   late DateTime _selectedDate;
   late bool _activities;
   late MyImagePicker _myImagePicker;
-  final List<String> _chosenPhotoPaths = [];
+  List<XFile> _chosenPhotos = [];
+
 
   String? _selectedChapterId;
   // String? _selectedChapterName;
@@ -117,10 +119,11 @@ class _JournalEntryPageState extends State<JournalEntryPage> {
   }
 
   Future<void> _getImageFromGallery() async {
-    String? imagePath = await _myImagePicker.pickImageFromGallery();
-    if (imagePath != null) {
+    final List<XFile> files =
+        await _myImagePicker.pickMultipleImagesFromGallery();
+    for (final file in files) {
       setState(() {
-        _chosenPhotoPaths.add(imagePath);
+        _chosenPhotos.add(file);
       });
     }
   }
@@ -282,16 +285,16 @@ class _JournalEntryPageState extends State<JournalEntryPage> {
               child: ConstrainedBox(
                 constraints: BoxConstraints(
                   // when there are no images, collapse to 0
-                  minHeight: _chosenPhotoPaths.isEmpty ? 0 : 100,
-                  maxHeight: _chosenPhotoPaths.isEmpty
+                  minHeight: _chosenPhotos.isEmpty ? 0 : 100,
+                  maxHeight: _chosenPhotos.isEmpty
                       ? 0
                       : MediaQuery.of(context).size.height * 0.25,
                 ),
-                child: _chosenPhotoPaths.isEmpty
+                child: _chosenPhotos.isEmpty
                     // show nothing when empty
                     ? const SizedBox.shrink()
                     // otherwise your carousel
-                    : ViewChosenImages(chosenPhotoPaths: _chosenPhotoPaths),
+                    : ViewChosenImages(chosenPhotos: _chosenPhotos),
               ),
             ),
             const SizedBox(height: 16),
@@ -328,7 +331,8 @@ class _JournalEntryPageState extends State<JournalEntryPage> {
       barrierDismissible: false, // user cannot tap outside to close
       builder: (dialogContext) {
         // This local variable holds the text shown in the dialog
-        String progressText = '0/${_chosenPhotoPaths.length} photos uploaded';
+        final List<XFile> imagePathsSnapshot = List.from(_chosenPhotos);
+        String progressText = '0/${imagePathsSnapshot.length} photos uploaded';
 
         // StatefulBuilder lets us call setState(...) inside the dialog
         return StatefulBuilder(
@@ -346,7 +350,7 @@ class _JournalEntryPageState extends State<JournalEntryPage> {
                   textController: _textController,
                   locationTextController: _locationTextController,
                   selectedDate: _selectedDate,
-                  imagePaths: _chosenPhotoPaths,
+                  imagePaths: imagePathsSnapshot,
 
                   // Each time one photo finishes, this is called:
                   onProgress: (uploadedCount, totalCount) {
@@ -370,9 +374,16 @@ class _JournalEntryPageState extends State<JournalEntryPage> {
                     // Wait a short moment so the user sees "Journal Entry Saved."
                     Future.delayed(const Duration(milliseconds: 500), () {
                       if (mounted) {
-                        Navigator.of(dialogContext).pop(); // close the dialog
+                        // Safely pop the dialog
+                        Navigator.of(dialogContext).pop();
+
+                        // Then schedule the page pop on the next frame
+                        Future.microtask(() {
+                          if (mounted) {
+                            Navigator.of(context).pop();
+                          }
+                        });
                       }
-                      Navigator.of(context).pop();
                     });
                   },
                 );
