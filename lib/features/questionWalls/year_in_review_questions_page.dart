@@ -211,6 +211,9 @@ class _YearInReviewQuestionsPageState extends State<YearInReviewQuestionsPage> {
     FavoriteCategory(title: 'Favorite Songs', items: ['Blinding Lights', 'Peaches']),
   ];
 
+  late bool createNew = false;
+
+
   Set<String> selectedCategoryTitles = {};
   final TextEditingController _yearController = TextEditingController();
   final TextEditingController _customCategoryController = TextEditingController();
@@ -231,39 +234,13 @@ class _YearInReviewQuestionsPageState extends State<YearInReviewQuestionsPage> {
       loading = false;
     });
   }
-
-  @override
-  Widget build(BuildContext context) {
+  
+  
+  Widget CreateYirPage(){
     final themeProv = context.watch<ThemeProvider>();
     final dbProvider = context.read<DBProvider>();
 
-    if (loading) {
-      return const Center(child: CircularProgressIndicator());
-    }
-
-    if (existingYirs.isNotEmpty) {
       return Scaffold(
-        appBar: AppBar(title: const Text('Your Year In Review')),
-        body: ListView.builder(
-          itemCount: existingYirs.length,
-          itemBuilder: (context, index) {
-            final yir = existingYirs[index];
-            return ListTile(
-              title: Text('Year ${yir.year}', style: const TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
-              trailing: const Icon(Icons.chevron_right),
-              onTap: () {
-                // Navigate to the YIR detail page (placeholder)
-                Navigator.of(context).push(
-                  fadeRoute(YirDetailPage(year: yir.year)),
-                );
-              },
-            );
-          },
-        ),
-      );
-    }
-
-    return Scaffold(
       appBar: AppBar(title: const Text('Create Your Year In Review')),
       body: Container(
         decoration: BoxDecoration(
@@ -362,13 +339,62 @@ class _YearInReviewQuestionsPageState extends State<YearInReviewQuestionsPage> {
 
                       final newYir = Yir(year: _yearController.text.trim(), categories: selectedCats);
                       await dbProvider.saveYir(newYir);
-                      if (context.mounted) Navigator.pop(context);
+                      setState(() {
+                        existingYirs.add(newYir);
+                        createNew = false;
+                      });
                     },
             ),
           ],
         ),
       ),
     );
+    }
+
+  @override
+  Widget build(BuildContext context) {
+    
+
+    
+
+    if (loading) {
+      return const Center(child: CircularProgressIndicator());
+    }
+    if (createNew) {
+      return CreateYirPage();
+    }
+
+    if (existingYirs.isNotEmpty) {
+      return Scaffold(
+        appBar: AppBar(title: const Text('Your Year In Review'), ),
+        body: ListView.builder(
+          itemCount: existingYirs.length,
+          itemBuilder: (context, index) {
+            final yir = existingYirs[index];
+            return ListTile(
+              title: Text('Year ${yir.year}', style: const TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
+              trailing: const Icon(Icons.chevron_right),
+              onTap: () {
+                // Navigate to the YIR detail page (placeholder)
+                Navigator.of(context).push(
+                  fadeRoute(YirDetailPage(year: yir.year)),
+                );
+              },
+            );
+          },
+        ),
+        floatingActionButton: FloatingActionButton(
+          onPressed: () {
+            setState(() {
+              createNew = true;
+            });
+          },
+          child: const Icon(Icons.add),
+        ),
+      );
+    }
+
+    return CreateYirPage();
   }
 }
 
