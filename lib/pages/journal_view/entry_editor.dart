@@ -1,12 +1,9 @@
-import 'dart:io';
 
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/material.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:intl/intl.dart';
 import 'package:journal/features/pictures/_my_image_picker.dart';
-import 'package:journal/features/pictures/view_chosen_images.dart';
-import 'package:journal/features/pictures/view_thumbnails.dart';
 import 'package:journal/providers/db_provider.dart';
 import 'package:provider/provider.dart';
 

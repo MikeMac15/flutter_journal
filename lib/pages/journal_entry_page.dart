@@ -33,7 +33,7 @@ class _JournalEntryPageState extends State<JournalEntryPage> {
   late DateTime _selectedDate;
   late bool _activities;
   late MyImagePicker _myImagePicker;
-  List<XFile> _chosenPhotos = [];
+  final List<XFile> _chosenPhotos = [];
 
 
   String? _selectedChapterId;

@@ -91,7 +91,7 @@ class _MenuButtonState extends State<MenuButton> {
                   style: TextStyle(
                     color: widget.textColor,
                     fontSize: widget.sizeOfFont,
-                    fontWeight: FontWeight.bold,
+                    // fontWeight: FontWeight.bold,
                   ),
                   textAlign: TextAlign.center,
                 ),

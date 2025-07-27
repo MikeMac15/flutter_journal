@@ -65,26 +65,26 @@ class _HomeMenuState extends State<HomeMenu> with TickerProviderStateMixin {
               child: const Text('Settings'),
             ),
           ),
-          FadeTransition(
-            opacity: _menuFadeController,
-            child: MenuItemButton(
-              onPressed: () {
-                // TODO: navigate to profile
-              },
-              leadingIcon: const Icon(Icons.person),
-              child: const Text('Profile'),
-            ),
-          ),
-          FadeTransition(
-            opacity: _menuFadeController,
-            child: MenuItemButton(
-              onPressed: () {
-                // TODO: log out
-              },
-              leadingIcon: const Icon(Icons.logout),
-              child: const Text('Sign out'),
-            ),
-          ),
+          // FadeTransition(
+          //   opacity: _menuFadeController,
+          //   child: MenuItemButton(
+          //     onPressed: () {
+          //       // TODO: navigate to profile
+          //     },
+          //     leadingIcon: const Icon(Icons.person),
+          //     child: const Text('Profile'),
+          //   ),
+          // ),
+          // FadeTransition(
+          //   opacity: _menuFadeController,
+          //   child: MenuItemButton(
+          //     onPressed: () {
+          //       // TODO: log out
+          //     },
+          //     leadingIcon: const Icon(Icons.logout),
+          //     child: const Text('Sign out'),
+          //   ),
+          // ),
         ],
         builder: (BuildContext context, MenuController controller, Widget? child) {
           // on each rebuild, animate icon to match controller state

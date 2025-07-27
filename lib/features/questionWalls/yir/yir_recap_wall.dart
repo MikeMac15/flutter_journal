@@ -15,7 +15,7 @@ class YirRecapWall extends StatefulWidget {
 }
 
 class _YirRecapWallState extends State<YirRecapWall> {
-  bool _isEditing = false;
+  final bool _isEditing = false;
   bool _isAdding = false;
   final TextEditingController _textController = TextEditingController();
 
@@ -94,7 +94,7 @@ class _YirRecapWallState extends State<YirRecapWall> {
                                               recapText: _textController.text.trim(),
                                             ),
                                           );
-                                          Navigator.pop(context);
+                                          // Navigator.pop(context);
                                           setState(() {});
                                         },
                                         child: const Text('Save'),

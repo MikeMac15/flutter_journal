@@ -124,8 +124,8 @@ class _HomePageState extends State<HomePage> {
                               ),
                               const SizedBox(height: 16),
                               RaiseButton(
-                                icon: Icons.question_answer,
-                                label: 'Questions',
+                                icon: Icons.filter_drama,
+                                label: 'Memory Wall',
                                 onPressed: () {
                                   Navigator.of(context).push(
                                     fadeRoute(
@@ -136,7 +136,7 @@ class _HomePageState extends State<HomePage> {
                               ),
                           const SizedBox(height: 16),    
                               RaiseButton(
-                                icon: Icons.question_answer,
+                                icon: Icons.photo_library_outlined,
                                 label: 'Recent Entries',
                                 onPressed: () {
                                   Navigator.of(context).push(
@@ -149,7 +149,7 @@ class _HomePageState extends State<HomePage> {
                           
                           const SizedBox(height: 16),
                           RaiseButton(
-                            icon: Icons.book,
+                            icon: Icons.book_outlined,
                             label: 'Chapters',
                             onPressed: () {
                               Navigator.of(context).push(

@@ -48,28 +48,31 @@ const RaiseButton({
         width: double.infinity,
         decoration: BoxDecoration(
           color: isDark
-              ? Colors.black.withOpacity(.5)
-              : Colors.white.withOpacity(0.5), // semi-transparent base
-          gradient: RadialGradient(
-  center: Alignment.center,
-  radius: 5, // Controls spread – tweak for visual effect
-  colors: isDark
-      ? [
-          Colors.grey[800]!,
-          Colors.grey[900]!,
+              ? Colors.black26
+              : Colors.white, // semi-transparent base
+  //         gradient: RadialGradient(
+  // center: Alignment.center,
+  // radius: 5, // Controls spread – tweak for visual effect
+  // colors: isDark
+  //     ? [
+  //         Colors.grey[800]!,
+  //         Colors.grey[900]!,
+  //         Colors.grey[800]!,
           
-        ]
-      : [
-          Colors.white,
-          Colors.grey[100]!,
           
-        ],
+  //       ]
+  //     : [
+  //         Colors.white,
+  //         Colors.grey[100]!,
+          
+  //       ],
   
-),
+// ),
           border: Border.all(
             color: isDark
-                ? Colors.black.withOpacity(0.4) // subtle border
-                : Colors.white.withOpacity(0.4),
+                // ? const Color.fromARGB(60, 41, 41, 41) // subtle border
+                ? const Color.fromARGB(65, 88, 88, 88)
+                : const Color.fromARGB(126, 225, 225, 225),
             width: 1.2,
           ),
           borderRadius: BorderRadius.circular(borderRadius),
@@ -90,7 +93,7 @@ const RaiseButton({
                 Text(
                   label,
                   style: theme.textTheme.labelLarge?.copyWith(
-                    fontWeight: FontWeight.w600,
+                    fontWeight: FontWeight.w500,
                     fontSize: fontSize,
                   ),
                 ),
