@@ -45,8 +45,28 @@ class DBProvider extends ChangeNotifier {
   List<RankedListClass> get rankedLists => _rankedLists;
   String? get userId => _userId;
   set userId(String? id) {
-    _userId = id;
-    notifyListeners();
+    if (_userId != id && id != null) {
+      _userId = id;
+      _initOnce();
+    }
+  }
+
+  bool _isInitialized = false;
+
+  Future<void> _initOnce() async {
+    if (_isInitialized || _userId == null) return;
+    _isInitialized = true;
+
+    try {
+      print('################## INITIALIZING DB PROVIDER ##################');
+      await fetchJournalEntrySnapshot();
+      await fetchAllRankedLists();
+      await loadChapters();
+      notifyListeners();
+    } catch (e) {
+      print('Error initializing DBProvider: $e');
+      rethrow;
+    }
   }
 
   List<JournalEntry> _sortJournalList(List<JournalEntry> x) {
@@ -105,37 +125,37 @@ class DBProvider extends ChangeNotifier {
   }
 
   Future<void> fetchUpdatedEntry(String entryId) async {
-  final uid = _userId;
-  if (uid == null) return;
+    final uid = _userId;
+    if (uid == null) return;
 
-  final doc = await FirebaseFirestore.instance
-      .collection('users')
-      .doc(uid)
-      .collection('entries')
-      .doc(entryId)
-      .get();
+    final doc = await FirebaseFirestore.instance
+        .collection('users')
+        .doc(uid)
+        .collection('entries')
+        .doc(entryId)
+        .get();
 
-  if (doc.exists) {
-    final data = doc.data()!;
-    final parsedDate = DateTime.tryParse(data['date'].toString()) ?? DateTime.now();
-    final timestamp = data['timestamp'] is Timestamp
-        ? (data['timestamp'] as Timestamp).toDate()
-        : DateTime.tryParse(data['timestamp'].toString()) ?? DateTime.now();
+    if (doc.exists) {
+      final data = doc.data()!;
+      final parsedDate =
+          DateTime.tryParse(data['date'].toString()) ?? DateTime.now();
+      final timestamp = data['timestamp'] is Timestamp
+          ? (data['timestamp'] as Timestamp).toDate()
+          : DateTime.tryParse(data['timestamp'].toString()) ?? DateTime.now();
 
-    _journalEntries[entryId] = JournalEntry(
-      id: entryId,
-      entry: data['entry'],
-      location: data['location'],
-      activities: List<String>.from(data['activities'] ?? []),
-      imgUrls: List<String>.from(data['imgUrls'] ?? []),
-      date: parsedDate,
-      timestamp: timestamp,
-      views: data['views'] ?? 0,
-    );
-    notifyListeners(); // 🔥 THIS IS CRITICAL
+      _journalEntries[entryId] = JournalEntry(
+        id: entryId,
+        entry: data['entry'],
+        location: data['location'],
+        activities: List<String>.from(data['activities'] ?? []),
+        imgUrls: List<String>.from(data['imgUrls'] ?? []),
+        date: parsedDate,
+        timestamp: timestamp,
+        views: data['views'] ?? 0,
+      );
+      notifyListeners(); // 🔥 THIS IS CRITICAL
+    }
   }
-}
-
 
   Future<void> fetchJournalEntrySnapshot() async {
     final uid = _userId!;
@@ -226,13 +246,12 @@ class DBProvider extends ChangeNotifier {
   }
 
   Future<String?> _uploadPic(XFile xfile, String uid) async {
-    
     print('Uploading file ${xfile.name} at path ${xfile.path}');
 
     final storageRef = FirebaseStorage.instance.ref();
     // give it a unique name, e.g. based on timestamp + original name
-    final name = '${DateTime.now().millisecondsSinceEpoch}_${xfile.name}_${Random().nextInt(99999)}';
-
+    final name =
+        '${DateTime.now().millisecondsSinceEpoch}_${xfile.name}_${Random().nextInt(99999)}';
 
     final imageRef = storageRef.child('users/$uid/entryImages/$name');
     final metadata = SettableMetadata(contentType: 'image/jpeg');
@@ -623,6 +642,7 @@ class DBProvider extends ChangeNotifier {
     final updated = Yir(
       year: yir.year,
       categories: [...yir.categories, newCategory],
+      recaps: [...yir.recaps],
     );
 
     await saveYir(updated);
@@ -633,7 +653,7 @@ class DBProvider extends ChangeNotifier {
     final doc = await getYirDocument(year);
     if (!doc.exists) return;
 
-    final yir = Yir.fromDoc(doc);
+    Yir yir = Yir.fromDoc(doc);
     final categories = yir.categories.map((cat) {
       if (cat.title == categoryTitle && itemIndex < cat.items.length) {
         final newItems = [...cat.items]..removeAt(itemIndex);
@@ -643,9 +663,15 @@ class DBProvider extends ChangeNotifier {
     }).toList();
     final index = _allYir.indexWhere((item) => item.year == year);
     if (index != -1) {
-      _allYir[index] = Yir(year: year, categories: categories);
+      _allYir[index] =
+          Yir(year: year, categories: categories, recaps: yir.recaps);
     }
-    await updateYir(Yir(year: year, categories: categories));
+    Yir updatedYir = Yir(
+      year: yir.year,
+      categories: categories,
+      recaps: yir.recaps,
+    );
+    await updateYir(updatedYir);
 
     notifyListeners();
   }
@@ -663,8 +689,19 @@ class DBProvider extends ChangeNotifier {
         }
         return cat;
       }).toList();
+      final index = _allYir.indexWhere((item) => item.year == year);
+      if (index != -1) {
+        _allYir[index] =
+            Yir(year: year, categories: updatedCategories, recaps: yir.recaps);
+      }
+      Yir updatedYir = Yir(
+        year: yir.year,
+        categories: updatedCategories,
+        recaps: yir.recaps,
+      );
+      await updateYir(updatedYir);
 
-      await updateYir(Yir(year: year, categories: updatedCategories));
+      notifyListeners();
     } catch (e) {
       debugPrint('Error updating category items: $e');
     }
@@ -685,8 +722,19 @@ class DBProvider extends ChangeNotifier {
       }
       return cat;
     }).toList();
+    final index = _allYir.indexWhere((item) => item.year == year);
+    if (index != -1) {
+      _allYir[index] =
+          Yir(year: year, categories: updatedCategories, recaps: yir.recaps);
+    }
+    Yir updatedYir = Yir(
+      year: yir.year,
+      categories: updatedCategories,
+      recaps: yir.recaps,
+    );
+    await updateYir(updatedYir);
 
-    await updateYir(Yir(year: year, categories: updatedCategories));
+    notifyListeners();
   }
 
 /////////////// RECAPS //////////////////////

@@ -15,9 +15,63 @@ class YirRecapWall extends StatefulWidget {
 }
 
 class _YirRecapWallState extends State<YirRecapWall> {
-  final bool _isEditing = false;
+  bool _isEditing = false;
   bool _isAdding = false;
   final TextEditingController _textController = TextEditingController();
+  int deleteCount = 0;
+
+ 
+
+  void _showEditDialog(BuildContext context, YirRecap recap, int index) {
+    _textController.text = recap.recapText;
+    showDialog(
+      context: context,
+      builder: (context) {
+        return AlertDialog(
+          title: const Text('Edit Recap'),
+          content: TextField(
+            controller: _textController,
+            autofocus: true,
+          ),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.pop(context),
+              child: const Text('Cancel'),
+            ),
+            TextButton(
+              onPressed: () async {
+                await context.read<DBProvider>().updateRecap(
+                  widget.year,
+                  index,
+                  YirRecap(
+                    date: recap.date,
+                    recapText: _textController.text.trim(),
+                  ),
+                );
+                setState(() {});
+                Navigator.pop(context);
+              },
+              child: const Text('Save'),
+            ),
+            TextButton(
+              onPressed: () async {
+                if (deleteCount > 2) {
+                  ScaffoldMessenger.of(context).showSnackBar(
+                    SnackBar(content: Text('Press delete again ${deleteCount == 2 ?'twice ': ''}to confirm')),
+                  );
+                  return;
+                }
+                deleteCount++;
+                await context.read<DBProvider>().deleteRecap(widget.year, index);
+                Navigator.pop(context);
+              },
+              child: const Text('Delete'),
+            ),
+          ],
+        );
+      },
+    );
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -45,6 +99,7 @@ class _YirRecapWallState extends State<YirRecapWall> {
                       fontSize: 16,
                       fontWeight: FontWeight.w600,
                       color: Colors.grey,
+                      fontStyle: FontStyle.italic
                     ),
                   ),
                   const SizedBox(height: 6),
@@ -58,57 +113,19 @@ class _YirRecapWallState extends State<YirRecapWall> {
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
                         Expanded(
-                          child: Text(
-                            recap.recapText,
-                            style: const TextStyle(fontSize: 16),
+                          child: TextButton(
+                            onPressed: () {
+                              // Show the edit dialog
+                              _showEditDialog(context, recap, index);
+                            },
+                            child: Text(
+                              recap.recapText,
+                              style: const TextStyle(fontSize: 18, color: Colors.black87, height: 1.4, fontWeight: FontWeight.w500, fontStyle: FontStyle.italic),
+                            ),
                           ),
                         ),
-                        if (_isEditing)
-                          PopupMenuButton<String>(
-                            onSelected: (value) async {
-                              if (value == 'delete') {
-                                await dbProvider.deleteRecap(widget.year, index);
-                                setState(() {});
-                              } else if (value == 'edit') {
-                                _textController.text = recap.recapText;
-                                await showDialog(
-                                  context: context,
-                                  builder: (_) => AlertDialog(
-                                    title: const Text('Edit Recap'),
-                                    content: TextField(
-                                      controller: _textController,
-                                      autofocus: true,
-                                    ),
-                                    actions: [
-                                      TextButton(
-                                        onPressed: () => Navigator.pop(context),
-                                        child: const Text('Cancel'),
-                                      ),
-                                      TextButton(
-                                        onPressed: () async {
-                                          await dbProvider.updateRecap(
-                                            widget.year,
-                                            index,
-                                            YirRecap(
-                                              date: recap.date,
-                                              recapText: _textController.text.trim(),
-                                            ),
-                                          );
-                                          // Navigator.pop(context);
-                                          setState(() {});
-                                        },
-                                        child: const Text('Save'),
-                                      ),
-                                    ],
-                                  ),
-                                );
-                              }
-                            },
-                            itemBuilder: (_) => const [
-                              PopupMenuItem(value: 'edit', child: Text('Edit')),
-                              PopupMenuItem(value: 'delete', child: Text('Delete')),
-                            ],
-                          )
+                     
+                    
                       ],
                     ),
                   ),
@@ -119,7 +136,7 @@ class _YirRecapWallState extends State<YirRecapWall> {
         ),
         if (_isAdding)
           Padding(
-            padding: const EdgeInsets.all(12),
+            padding: const EdgeInsets.symmetric(horizontal: 60),
             child: Row(
               children: [
                 Expanded(
@@ -150,15 +167,7 @@ class _YirRecapWallState extends State<YirRecapWall> {
               ],
             ),
           )
-        else
-          Padding(
-            padding: const EdgeInsets.only(bottom: 16),
-            child: ElevatedButton.icon(
-              onPressed: () => setState(() => _isAdding = true),
-              icon: const Icon(Icons.add_comment),
-              label: const Text('Add Recap'),
-            ),
-          ),
+       
       ],
     );
   }

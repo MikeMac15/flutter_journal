@@ -5,6 +5,7 @@ import 'package:firebase_core/firebase_core.dart';
 import 'package:journal/firebase_options.dart';
 import 'package:journal/pages/home_page.dart';
 import 'package:journal/pages/login_page.dart';
+import 'package:journal/pages/myhomepage.dart';
 import 'package:journal/providers/db_provider.dart';
 import 'package:journal/providers/theme_provider.dart';
 import 'package:journal/providers/user_provider.dart';
@@ -39,11 +40,8 @@ Future<void> main() async {
         ChangeNotifierProxyProvider<UserProvider, DBProvider>(
           create: (_) => DBProvider(),
           update: (context, userProv, dbProv) {
-            if (userProv.userId != null && dbProv!.userId != userProv.userId) {
-              dbProv.userId = userProv.userId;
-              dbProv.init();
-            }
-            return dbProv!;
+            dbProv!.userId = userProv.userId;
+            return dbProv;
           },
         ),
       ],
@@ -63,23 +61,21 @@ class MyApp extends StatelessWidget {
     final themeProv = context.watch<ThemeProvider>();
 
     return MaterialApp(
-  debugShowCheckedModeBanner: false,
-  theme: themeProv.themeData,
-  // Wrap *all* routes in this gradient
-  builder: (context, child) {
-    return Container(
-      decoration: BoxDecoration(
-        gradient: LinearGradient(
-          colors: themeProv.backgroundGradientColors,
-          begin: Alignment.topCenter,
-          end: Alignment.bottomCenter,
-        ),
-      ),
-      child: 
-      child
+      debugShowCheckedModeBanner: false,
+      theme: themeProv.themeData,
+      // Wrap *all* routes in this gradient
+      builder: (context, child) {
+        return Container(
+            decoration: BoxDecoration(
+              gradient: LinearGradient(
+                colors: themeProv.backgroundGradientColors,
+                begin: Alignment.topCenter,
+                end: Alignment.bottomCenter,
+              ),
+            ),
+            child: child);
+      },
+      home: loggedIn ? const MyHomePage() : const LoginPage(),
     );
-  },
-  home: loggedIn ? const HomePage() : const LoginPage(),
-);
   }
 }

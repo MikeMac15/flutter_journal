@@ -140,7 +140,24 @@ class _YirRankedListsState extends State<YirRankedLists> {
                             child: Text('${i + 1}'),
                           ),
                           title: Text(item.text),
-                          trailing: const Icon(Icons.drag_handle),
+                          trailing: 
+                          Row(
+                            mainAxisSize: MainAxisSize.min,
+                            children: [
+                              IconButton(
+                                icon: const Icon(Icons.delete, color: Colors.red),
+                                onPressed: () async {
+                                  await dbProvider.deleteItemFromCategory(
+                                    widget.yir.year,
+                                    category.title,
+                                    i,
+                                  );
+                                  setState(() {});
+                                },
+                              ),
+                              const Icon(Icons.drag_handle),
+                          ],
+                          ),
                         );
                       }),
                     )
@@ -152,20 +169,7 @@ class _YirRankedListsState extends State<YirRankedLists> {
                             child: Text('${i + 1}'),
                           ),
                           title: Text(category.items[i].text),
-                          trailing: IconButton(
-                            icon: const Icon(Icons.delete, color: Colors.red),
-                            onPressed: () async {
-                              await dbProvider.deleteItemFromCategory(
-                                widget.yir.year,
-                                category.title,
-                                i,
-                              );
-                              setState(() {});
-                              ScaffoldMessenger.of(context).showSnackBar(
-                                const SnackBar(content: Text('Item deleted')),
-                              );
-                            },
-                          ),
+                          
                         );
                       }),
                     ),

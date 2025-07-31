@@ -92,7 +92,13 @@ build/web/
 
 # Firebase local emulator & hosting cache
 .firebase/
+.firebase/*
 .firebase*/  
+.firebase/photojournal-a784e/
+.firebase/hosting.LmZpcmViYXNlL3Bob3Rvam91cm5hbC1hNzg0ZS9ob3N0aW5n.cache
+.firebase/photojournal-a784e/hosting/main.dart.js
+.firebase/photojournal-a784e/hosting/.last_build_id
+.firebase/photojournal-a784e/hosting/flutter_bootstrap.js
 hosting/
 hosting.*  
 

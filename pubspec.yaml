@@ -23,6 +23,7 @@ dependencies:
   flutter_colorpicker: ^1.0.3
   flutter_image_compress: ^2.4.0 
   web: ^1.1.1
+  transparent_image: ^2.0.1
 
 dev_dependencies:
   flutter_test:

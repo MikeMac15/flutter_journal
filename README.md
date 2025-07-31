@@ -2,6 +2,18 @@
 
                                             ~~ TO-DO ~~
 
+~UI3~
+[ ] Fix ########### INIT DB PROVIDER ############### on start up no call sometimes
+[ ] Fix Yir message issues
+[ ] Finish Home components
+[ ] Unify the nav styles/colors
+
+
+
+
+
+
+~UI2~
 
 [ ?? ] Change order of photourls ability...?
 [ ] Also need to figure out elligant favorites functionality
