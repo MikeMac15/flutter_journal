@@ -73,7 +73,8 @@ class CalendarJournalListView extends StatelessWidget {
                       borderRadius: BorderRadius.circular(12),
                       onTap: () {
                         Navigator.of(context).push(
-                               fadeRoute(JournalEntryViewPage(entryId: entry.id), duration: const Duration(milliseconds: 100)),
+                          fadeRoute(JournalEntryViewPage(entryId: entry.id),
+                              duration: const Duration(milliseconds: 100)),
                         );
                       },
                       child: Column(
@@ -175,59 +176,57 @@ class CalendarJournalListView extends StatelessWidget {
             ),
           ),
         ],
-        Padding(
-          padding: const EdgeInsets.all(20),
-          child: Center(
-            child: Container(
-              decoration: BoxDecoration(
-                gradient: LinearGradient(
-                  colors: [
-                    Colors.blueGrey.shade300,
-                    Colors.pink.shade300,
-                  ],
-                  begin: Alignment.topLeft,
-                  end: Alignment.bottomRight,
-                ),
-                borderRadius: BorderRadius.circular(18),
-              ),
-              child: InkWell(
-                borderRadius: BorderRadius.circular(16),
-                onTap: () {
-                  final dateToUse = entries.isNotEmpty
-                      ? entries.first.date
-                      : DateTime.now();
-                  Navigator.of(context).push(
-                    fadeRoute(JournalEntryPage(selectedDate: dateToUse)),
-                    );
-                  
-                },
-                child: Container(
-                  padding: const EdgeInsets.all(10),
-                  margin: const EdgeInsets.all(2),
-                  decoration: BoxDecoration(
-                    color: const Color.fromARGB(70, 255, 255, 255),
-                    borderRadius: BorderRadius.circular(16),
-                  ),
-                  child: Row(
-                    mainAxisSize: MainAxisSize.min,
-                    children: [
-                      Icon(Icons.add, size: 28, color: Colors.white),
-                      const SizedBox(width: 8),
-                      Text(
-                        'New Entry',
-                        style: TextStyle(
-                          fontSize: 18,
-                          fontWeight: FontWeight.bold,
-                          color: Colors.white,
-                        ),
-                      ),
-                    ],
-                  ),
-                ),
-              ),
-            ),
-          ),
-        ),
+        // Padding(
+        //   padding: const EdgeInsets.all(20),
+        //   child: Center(
+        //     child: Container(
+        //       decoration: BoxDecoration(
+        //         gradient: LinearGradient(
+        //           colors: [
+        //             Colors.blueGrey.shade300,
+        //             Colors.pink.shade300,
+        //           ],
+        //           begin: Alignment.topLeft,
+        //           end: Alignment.bottomRight,
+        //         ),
+        //         borderRadius: BorderRadius.circular(18),
+        //       ),
+        //       child: InkWell(
+        //         borderRadius: BorderRadius.circular(16),
+        //         onTap: () {
+        //           final dateToUse =
+        //               entries.isNotEmpty ? entries.first.date : DateTime.now();
+        //           Navigator.of(context).push(
+        //             fadeRoute(JournalEntryPage(selectedDate: dateToUse)),
+        //           );
+        //         },
+        //         child: Container(
+        //           padding: const EdgeInsets.all(10),
+        //           margin: const EdgeInsets.all(2),
+        //           decoration: BoxDecoration(
+        //             color: const Color.fromARGB(70, 255, 255, 255),
+        //             borderRadius: BorderRadius.circular(16),
+        //           ),
+        //           child: Row(
+        //             mainAxisSize: MainAxisSize.min,
+        //             children: [
+        //               Icon(Icons.add, size: 28, color: Colors.white),
+        //               const SizedBox(width: 8),
+        //               Text(
+        //                 'New Entry',
+        //                 style: TextStyle(
+        //                   fontSize: 18,
+        //                   fontWeight: FontWeight.bold,
+        //                   color: Colors.white,
+        //                 ),
+        //               ),
+        //             ],
+        //           ),
+        //         ),
+        //       ),
+        //     ),
+        //   ),
+        // ),
       ],
     );
   }

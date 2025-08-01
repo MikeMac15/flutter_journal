@@ -17,44 +17,28 @@ class _CalendarCardState extends State<CalendarCard> {
   DateTime? _selectedDay;
 
   void _onDaySelected(DateTime selectedDay, DateTime focusedDay) {
-    if (_focusedDay == focusedDay){
+    if (isSameDay(_focusedDay, focusedDay)) {
       Navigator.push(
-            context,
-            MaterialPageRoute(
-              builder: (_) => JournalEntryPage(selectedDate: focusedDay),
-            ),
-          );
+        context,
+        MaterialPageRoute(
+          builder: (_) => JournalEntryPage(selectedDate: focusedDay),
+        ),
+      );
     }
     setState(() {
       _selectedDay = selectedDay;
       _focusedDay = focusedDay;
     });
-    // existing navigation logic
-    // final String? entryId = _hasJournalEntry(selectedDay);
-    // if (entryId != null) {
-    //   Navigator.push(
-    //     context,
-    //     MaterialPageRoute(
-    //       builder: (_) => JournalEntryViewPage(entryId: entryId),
-    //     ),
-    //   );
-    // } else {
-    //   Navigator.push(
-    //     context,
-    //     MaterialPageRoute(
-    //       builder: (_) => JournalEntryPage(selectedDate: selectedDay),
-    //     ),
-    //   );
-    // }
   }
 
   // Pseudo stubs for coloring logic
-  bool _isToday(DateTime day) => false; // TODO
+  bool _isToday(DateTime day) => isSameDay(day, DateTime.now());
   bool _isFavorite(DateTime day) => false; // TODO
 
-  bool _hasPastEntry(DateTime day){
+  bool _hasPastEntry(DateTime day) {
     return _hasJournalEntry(day) != null;
-  } 
+  }
+
   bool _hasMultipleEntries(DateTime day) => false; // TODO
 
   String? _hasJournalEntry(DateTime day) {
@@ -71,7 +55,6 @@ class _CalendarCardState extends State<CalendarCard> {
 
   // TODO: implement this to return actual entries
   List<JournalEntry> _getEntriesForDay(DateTime day) {
-    
     final dbProvider = Provider.of<DBProvider>(context, listen: false);
     return dbProvider.getJournalEntriesForDay(day);
   }
@@ -81,8 +64,11 @@ class _CalendarCardState extends State<CalendarCard> {
     final entries = _getEntriesForDay(_selectedDay!);
     if (entries.isEmpty) {
       return Padding(
-        padding: const EdgeInsets.symmetric(vertical: 8),
-        child: Text('No entries for selected date', style: theme.textTheme.bodyMedium),
+        padding: const EdgeInsets.symmetric(vertical: 16.0),
+        child: Center(
+          child: Text('No entries for selected date',
+              style: theme.textTheme.bodyMedium),
+        ),
       );
     }
     final sortedEntries = List<JournalEntry>.from(entries)
@@ -100,7 +86,7 @@ class _CalendarCardState extends State<CalendarCard> {
         children: [
           _keyItem(theme.colorScheme.secondary, 'Today'),
           _keyItem(Colors.amber, 'Favorited'),
-          _keyItem(Colors.green, 'Past Entry'),
+          _keyItem(Colors.grey.shade400, 'Past Entry'),
           _keyItem(Colors.purple, 'Multiple Entries'),
         ],
       ),
@@ -139,9 +125,12 @@ class _CalendarCardState extends State<CalendarCard> {
               headerStyle: HeaderStyle(
                 formatButtonVisible: false,
                 titleCentered: true,
-                titleTextStyle: theme.textTheme.titleMedium ?? const TextStyle(),
-                leftChevronIcon: Icon(Icons.chevron_left, color: theme.colorScheme.secondary),
-                rightChevronIcon: Icon(Icons.chevron_right, color: theme.colorScheme.secondary),
+                titleTextStyle:
+                    theme.textTheme.titleMedium ?? const TextStyle(),
+                leftChevronIcon: Icon(Icons.chevron_left,
+                    color: theme.colorScheme.secondary),
+                rightChevronIcon: Icon(Icons.chevron_right,
+                    color: theme.colorScheme.secondary),
               ),
               calendarStyle: CalendarStyle(
                 todayDecoration: BoxDecoration(
@@ -152,10 +141,15 @@ class _CalendarCardState extends State<CalendarCard> {
               calendarBuilders: CalendarBuilders(
                 defaultBuilder: (ctx, day, focused) {
                   Color? bg;
-                  if (_isToday(day)) { bg = theme.colorScheme.primaryContainer; }
-                  else if (_isFavorite(day)) { bg = Colors.amber.withAlpha((0.3 * 255).toInt()); }
-                  else if (_hasMultipleEntries(day)) { bg = Colors.purple.withAlpha((0.3 * 255).toInt()); }
-                  else if (_hasPastEntry(day)) { bg = Colors.grey.shade400; }
+                  if (_isToday(day)) {
+                    bg = theme.colorScheme.secondary.withAlpha(50);
+                  } else if (_isFavorite(day)) {
+                    bg = Colors.amber.withAlpha((0.3 * 255).toInt());
+                  } else if (_hasMultipleEntries(day)) {
+                    bg = Colors.purple.withAlpha((0.3 * 255).toInt());
+                  } else if (_hasPastEntry(day)) {
+                    bg = Colors.grey.shade300;
+                  }
                   return Container(
                     margin: const EdgeInsets.all(6),
                     alignment: Alignment.center,
@@ -163,13 +157,17 @@ class _CalendarCardState extends State<CalendarCard> {
                       color: bg,
                       shape: BoxShape.circle,
                     ),
-                    child: Text(day.day.toString(), style: theme.textTheme.bodyMedium),
+                    child: Text(day.day.toString(),
+                        style: theme.textTheme.bodyMedium),
                   );
                 },
               ),
             ),
-            // widget listing entries under calendar
-            _buildEntryList(theme),
+            // --- FIX: Wrap the list widget in Flexible ---
+            // This prevents the ListView from taking infinite height and causing an overflow.
+            Flexible(
+              child: _buildEntryList(theme),
+            ),
             // legend key
             _buildKey(theme),
           ],

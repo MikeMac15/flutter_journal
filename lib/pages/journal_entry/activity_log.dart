@@ -109,16 +109,12 @@ Widget build(BuildContext context) {
                           ),
                         ),
                   const SizedBox(height: 10),
-                  Row(
-                    mainAxisAlignment: MainAxisAlignment.spaceEvenly,
-                    children: [
-                      
-                     RaiseButton(
-                        onPressed: _saveActivity,
-                        label: 'Save Activity',
+                  Center(
+                        child: RaiseButton(
+                          onPressed: _saveActivity,
+                          label: 'Save Activity',
+                        ),
                       ),
-                    ],
-                  ),
                   const SizedBox(height: 20), // Extra padding at the bottom
                       ],
                     ),

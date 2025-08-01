@@ -17,13 +17,13 @@ class SettingsPage extends StatelessWidget {
 
     return Scaffold(
       // Make the Scaffold transparent so the gradient shows through
-      backgroundColor: Colors.transparent,
-      extendBodyBehindAppBar: true,
-      appBar: AppBar(
-        title: const Text('Settings'),
-        backgroundColor: Colors.transparent,
-        elevation: 0,
-      ),
+      // backgroundColor: Colors.transparent,
+      // extendBodyBehindAppBar: true,
+      // appBar: AppBar(
+      //   title: const Text('Settings'),
+      //   backgroundColor: Colors.transparent,
+      //   elevation: 0,
+      // ),
       body: Container(
         decoration: BoxDecoration(
           gradient: LinearGradient(
@@ -132,6 +132,8 @@ class SettingsPage extends StatelessWidget {
                     },
                   ),
                 ),
+                const Divider(height: 32),
+                const SizedBox(height: 32),
               ],
             ),
           ),

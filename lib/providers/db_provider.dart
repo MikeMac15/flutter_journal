@@ -45,23 +45,34 @@ class DBProvider extends ChangeNotifier {
   List<RankedListClass> get rankedLists => _rankedLists;
   String? get userId => _userId;
   set userId(String? id) {
-    if (_userId != id && id != null) {
+    if ((_userId != id && id != null) || _journalEntries.isEmpty) {
       _userId = id;
       _initOnce();
+    }
+    else {
+      print('DBProvider already initialized. Journal entries: ${_journalEntries.length}');
     }
   }
 
   bool _isInitialized = false;
 
   Future<void> _initOnce() async {
-    if (_isInitialized || _userId == null) return;
-    _isInitialized = true;
+    if (_isInitialized || _journalEntries.isNotEmpty) {
+      print('DBProvider initialized successfully. Journal entry count: ${_journalEntryDates.length}');
+      return;
+      }
+
+    if (_userId == null) {
+      throw StateError('DBProvider: User ID is not set.');
+    }
 
     try {
-      print('################## INITIALIZING DB PROVIDER ##################');
+      print('################## INITIALIZING DB PROVIDER ONCE##################');
       await fetchJournalEntrySnapshot();
       await fetchAllRankedLists();
       await loadChapters();
+      _isInitialized = true;
+      print('DBProvider initialized successfully. Journal entry count: ${_journalEntryDates.length}');
       notifyListeners();
     } catch (e) {
       print('Error initializing DBProvider: $e');

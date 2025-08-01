@@ -14,14 +14,18 @@ class QuestionsHome extends StatelessWidget {
     final largeButtons = [{
       'title': 'Year in Review',
       'page': const YearInReviewQuestionsPage(),
-      'asset': 'assets/images/questions/yearInReview.png',
+      'asset': 'assets/images/questions/disco.png',
     },
     {
       'title': 'Ranked Lists',
       'page': const RankedListHome(),
       'asset': 'assets/images/questions/yearInReview.png',
     },
-    
+    {
+      'title': 'Questions',
+      'page': const RankedListHome(),
+      'asset': 'assets/images/questions/questionSky.png',
+    }
     ];
 
     final smallCards = [
@@ -59,7 +63,7 @@ class QuestionsHome extends StatelessWidget {
     ];
 
     return Scaffold(
-      appBar: AppBar(title: const Text('Questions Home'), surfaceTintColor: Theme.of(context).colorScheme.surfaceTint),
+      // appBar: AppBar(title: const Text('Questions Home'), surfaceTintColor: Theme.of(context).colorScheme.surfaceTint),
       body: Center(
         child: SingleChildScrollView(
           padding: const EdgeInsets.symmetric(vertical: 24, horizontal: 16),
@@ -77,6 +81,20 @@ class QuestionsHome extends StatelessWidget {
                 ),
               ),
 
+
+              const SizedBox(height: 24),
+              
+              SizedBox(
+                width: MediaQuery.of(context).size.width * 0.8,
+                child: LargeImageButton(
+                  title: largeButtons[2]['title'] as String,
+                  backgroundImage: AssetImage(largeButtons[2]['asset'] as String),
+                  onPressed: () => Navigator.of(context).push(
+                    fadeRoute(largeButtons[2]['page'] as Widget),
+                  ),
+                ),
+              ),
+
               const SizedBox(height: 24),
 
               SizedBox(
@@ -89,6 +107,13 @@ class QuestionsHome extends StatelessWidget {
                   ),
                 ),
               ),
+              const SizedBox(height: 24),
+
+
+
+
+
+
 
               const SizedBox(height: 32),
               // Title for the small cards section

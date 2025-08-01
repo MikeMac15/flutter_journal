@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter_image_compress/flutter_image_compress.dart';
+import 'package:intl/intl.dart';
 import 'package:journal/features/menu_buttons/raised_button.dart';
 
 // import 'package:journal/pages/errors/auth_error_page.dart';
@@ -140,10 +141,12 @@ class _JournalEntryPageState extends State<JournalEntryPage> {
     final screenHeight = MediaQuery.of(context).size.height;
 
     return Scaffold(
-      backgroundColor: theme.colorScheme.surface,
+
+      backgroundColor: Colors.transparent,
       appBar: AppBar(
+        title: Text(DateFormat('E  MMM dd, yyyy').format(_selectedDate)),
         elevation: 2,
-        backgroundColor: theme.colorScheme.surface,
+        backgroundColor: Colors.transparent,
         leading: IconButton(
           icon: const Icon(Icons.close, color: Colors.redAccent),
           onPressed: () => Navigator.pop(context),
@@ -177,7 +180,7 @@ class _JournalEntryPageState extends State<JournalEntryPage> {
                     Icon(Icons.calendar_today, color: Colors.blue.shade700),
                     const SizedBox(width: 12),
                     Text(
-                      "Selected Date:",
+                      "Entry Date:",
                       style: TextStyle(
                         fontSize: 18,
                         fontWeight: FontWeight.w600,

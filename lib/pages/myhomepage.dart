@@ -1,10 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:journal/features/_fade_route.dart';
 import 'package:journal/features/questionWalls/questions_home.dart';
-import 'package:journal/pages/home_page.dart';
 import 'package:journal/pages/journal_entry_page.dart';
 import 'package:journal/pages/journal_recents_list.dart';
-import 'package:journal/providers/theme_provider.dart';
+import 'package:journal/pages/settings.dart';
 import 'package:journal/providers/user_provider.dart';
 import 'package:provider/provider.dart';
 
@@ -63,8 +62,7 @@ class _MyHomePageState extends State<MyHomePage> {
       icon: Icons.person_outline,
       selectedIcon: Icons.person,
       label: 'Profile',
-      component: const Center(
-          child: Text('Profile Page', style: TextStyle(fontSize: 24))),
+      component: SettingsPage(),
     ),
   ];
 
@@ -95,7 +93,7 @@ class _MyHomePageState extends State<MyHomePage> {
                               ? Colors.indigo
                               : Colors.grey.shade700,
                           size: 28.0),
-                  const SizedBox(height: 4.0),
+                  const SizedBox(height: 2.0),
                   Text(page.label,
                       style: TextStyle(
                           color: _selectedIndex == index
@@ -188,7 +186,9 @@ class _MyHomePageState extends State<MyHomePage> {
         // Use BottomNavigationBar and SliverAppBar for narrower screens
         else {
           return Scaffold(
-            body: CustomScrollView(
+            body: 
+            _selectedIndex == 0
+            ? CustomScrollView(
               slivers: [
                 // The SliverAppBar from your request
                 SliverAppBar(
@@ -259,8 +259,31 @@ class _MyHomePageState extends State<MyHomePage> {
                   ),
                 ),
               ],
-            ),
-            floatingActionButton: FloatingActionButton.large(
+            ) : Container(
+                    // Added a container to better position the content
+                    padding: const EdgeInsets.only(top: 20.0),
+                    height: MediaQuery.of(context).size.height,
+                    child: _pages[_selectedIndex].component,
+                  ),
+
+            // Bottom Navigation Bar
+            floatingActionButton: _selectedIndex == 0
+            ?
+             FloatingActionButton.large(
+              onPressed: () {
+                Navigator.of(context).push(
+                  fadeRoute(
+                    JournalEntryPage(),
+                  ),
+                );
+              },
+              backgroundColor: Colors.indigo,
+              shape: const CircleBorder(),
+              elevation: 10.0,
+              child: const Icon(Icons.add, color: Colors.white, size: 28.0),
+            )
+            :
+            FloatingActionButton(
               onPressed: () {
                 Navigator.of(context).push(
                   fadeRoute(
@@ -276,27 +299,33 @@ class _MyHomePageState extends State<MyHomePage> {
             floatingActionButtonLocation:
                 FloatingActionButtonLocation.centerDocked,
             bottomNavigationBar: BottomAppBar(
+              
               shape: const CircularNotchedRectangle(),
+
               // notchMargin: 1.0,
               child: SizedBox(
+                width: double.infinity,
                 height: 60.0,
                 child: Row(
-                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+
+                  mainAxisAlignment: MainAxisAlignment.start,
                   children: <Widget>[
                     Expanded(
                       child: Row(
-                        mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
                         children: <Widget>[
                           _buildTabItem(top: false, page: _pages[0], index: 0),
                           _buildTabItem(top: false, page: _pages[1], index: 1),
+                          const SizedBox(width: 10),
                         ],
                       ),
                     ),
                     const SizedBox(width: 60),
                     Expanded(
                       child: Row(
-                        mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
                         children: <Widget>[
+                          const SizedBox(width: 10),
                           _buildTabItem(top: false, page: _pages[2], index: 2),
                           _buildTabItem(top: false, page: _pages[3], index: 3),
                         ],

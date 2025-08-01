@@ -2,6 +2,7 @@
 
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
+import 'package:journal/features/_fade_route.dart';
 import 'package:journal/pages/journal_view_page.dart';
 import 'package:journal/providers/db_provider.dart';
 
@@ -43,13 +44,8 @@ class RecentsGridView extends StatelessWidget {
           clipBehavior: Clip.hardEdge,
           child: InkWell(
             onTap: () {
-              Navigator.push(
-                context,
-                MaterialPageRoute(
-                  builder: (_) => JournalEntryViewPage(
-                    entryId: entry.id,
-                  ),
-                ),
+              Navigator.of(context).push(
+                  fadeRoute(JournalEntryViewPage(entryId: entry.id), duration: const Duration(milliseconds: 100)),
               );
             },
             child: Padding(

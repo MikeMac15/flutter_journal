@@ -3,7 +3,6 @@ import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:firebase_core/firebase_core.dart';
 import 'package:journal/firebase_options.dart';
-import 'package:journal/pages/home_page.dart';
 import 'package:journal/pages/login_page.dart';
 import 'package:journal/pages/myhomepage.dart';
 import 'package:journal/providers/db_provider.dart';

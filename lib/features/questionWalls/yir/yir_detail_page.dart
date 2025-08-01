@@ -93,6 +93,7 @@ class _YirDetailPageState extends State<YirDetailPage> {
               Expanded(child: YirRecapWall(year: yir.year, yirRecaps: yir.recaps)), // Display the recap wall
               const SizedBox(height: 16),
               Expanded(child: YirRankedLists(yir: yir)),
+              const SizedBox(height: 150),
               
             ]));
       },

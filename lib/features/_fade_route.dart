@@ -6,7 +6,7 @@ import 'package:flutter/material.dart';
 /// You can optionally pass a custom [duration].
 Route<T> fadeRoute<T>(
   Widget page, {
-  Duration duration = const Duration(milliseconds: 250),
+  Duration duration = const Duration(milliseconds: 100),
 }) {
   return PageRouteBuilder<T>(
     pageBuilder: (context, animation, secondaryAnimation) => page,

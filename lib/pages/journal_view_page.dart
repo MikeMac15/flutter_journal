@@ -42,7 +42,7 @@ class JournalEntryViewPageState extends State<JournalEntryViewPage> {
 
     return Scaffold(
       appBar: AppBar(
-        title: const Text('Journal Entry'),
+        title: Text(DateFormat.yMMMMd().format(entryData.date)),
       ),
       body: Center(
         child: ConstrainedBox(
@@ -53,14 +53,14 @@ class JournalEntryViewPageState extends State<JournalEntryViewPage> {
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.stretch,
               children: [
-                // Date
-                Text(
-                  DateFormat.yMMMMd().format(entryData.date),
-                  style: theme.textTheme.titleLarge
-                      ?.copyWith(fontWeight: FontWeight.bold),
-                  textAlign: TextAlign.center,
-                ),
-                const SizedBox(height: 16),
+                // // Date
+                // Text(
+                //   DateFormat.yMMMMd().format(entryData.date),
+                //   style: theme.textTheme.titleLarge
+                //       ?.copyWith(fontWeight: FontWeight.bold),
+                //   textAlign: TextAlign.center,
+                // ),
+                // const SizedBox(height: 16),
 
                 // Location Card
                 Card(
