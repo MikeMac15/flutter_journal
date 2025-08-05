@@ -8,8 +8,8 @@ import 'package:firebase_storage/firebase_storage.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:image_picker/image_picker.dart';
-import 'package:journal/features/questionWalls/YIR_Classes.dart';
-import 'package:journal/features/questionWalls/ranked_list_memories/ranked_list_class.dart';
+import 'package:journal/pages/questionWalls/ranked_list_memories/ranked_list_class.dart';
+import 'package:journal/pages/questionWalls/yir_classes.dart';
 import 'package:journal/providers/db/db_yir_helpers.dart';
 
 class JournalEntry {
@@ -34,11 +34,45 @@ class JournalEntry {
   });
 }
 
+class Chapter {
+  String id;
+  String name;
+  String description;
+  String image;
+  DateTime createdAt;
+  DateTime lastModified;
+  List<String> entryIDs;
+
+  Chapter({
+    required this.id,
+    required this.name,
+    required this.description,
+    required this.image,
+    required this.createdAt,
+    required this.lastModified,
+    required this.entryIDs,
+  });
+
+  // Factory constructor for type-safe parsing
+  factory Chapter.fromFirestore(DocumentSnapshot<Map<String, dynamic>> doc) {
+    final data = doc.data()!; // .data() will not be null with .withConverter
+    return Chapter(
+      id: doc.id,
+      name: data['name'] ?? 'No Name',
+      description: data['description'] ?? 'No Description',
+      image: data['image'] ?? '',
+      createdAt: (data['createdAt'] as Timestamp? ?? Timestamp.now()).toDate(),
+      lastModified: (data['lastModified'] as Timestamp? ?? Timestamp.now()).toDate(),
+      entryIDs: List<String>.from(data['entryIDs'] ?? []),
+    );
+  }
+}
+
 class DBProvider extends ChangeNotifier {
   String? _userId;
   // Using a map to store journal entries with their Firebase document ID as the key
   Map<String, JournalEntry> _journalEntries = {};
-  Map<String, Map<String, dynamic>> _chapters = {};
+  Map<String, Chapter> _chapters = {};
   List<Map<String, Object>> _journalEntryDates = [];
   List<RankedListClass> _rankedLists = [];
   List<Yir> _allYir = [];
@@ -48,9 +82,9 @@ class DBProvider extends ChangeNotifier {
     if ((_userId != id && id != null) || _journalEntries.isEmpty) {
       _userId = id;
       _initOnce();
-    }
-    else {
-      print('DBProvider already initialized. Journal entries: ${_journalEntries.length}');
+    } else {
+      print(
+          'DBProvider already initialized. Journal entries: ${_journalEntries.length}');
     }
   }
 
@@ -58,21 +92,24 @@ class DBProvider extends ChangeNotifier {
 
   Future<void> _initOnce() async {
     if (_isInitialized || _journalEntries.isNotEmpty) {
-      print('DBProvider initialized successfully. Journal entry count: ${_journalEntryDates.length}');
+      print(
+          'DBProvider initialized successfully. Journal entry count: ${_journalEntryDates.length}');
       return;
-      }
+    }
 
     if (_userId == null) {
       throw StateError('DBProvider: User ID is not set.');
     }
 
     try {
-      print('################## INITIALIZING DB PROVIDER ONCE##################');
+      print(
+          '################## INITIALIZING DB PROVIDER ONCE##################');
       await fetchJournalEntrySnapshot();
       await fetchAllRankedLists();
       await loadChapters();
       _isInitialized = true;
-      print('DBProvider initialized successfully. Journal entry count: ${_journalEntryDates.length}');
+      print(
+          'DBProvider initialized successfully. Journal entry count: ${_journalEntryDates.length}');
       notifyListeners();
     } catch (e) {
       print('Error initializing DBProvider: $e');
@@ -86,13 +123,25 @@ class DBProvider extends ChangeNotifier {
     return sortedList;
   }
 
+  List<JournalEntry> getSortedJournalListForThisMonth() {
+    final filteredList = _journalEntries.values.where((entry) =>
+      entry.date.month == DateTime.now().month
+    ).toList();
+    filteredList.sort((a, b) => b.date.day.compareTo(a.date.day));
+    return filteredList;
+  }
+  List<JournalEntry> getMostRecent5Entries() {
+    final sortedList = _sortJournalList(_journalEntries.values.toList());
+    return sortedList.take(5).toList();
+  }
+
   UnmodifiableMapView<String, JournalEntry> get journalEntries =>
       UnmodifiableMapView(_journalEntries);
 
   UnmodifiableListView<JournalEntry> get journalEntriesSorted =>
       UnmodifiableListView(_sortJournalList(_journalEntries.values.toList()));
 
-  UnmodifiableMapView<String, Map<String, dynamic>> get chapters =>
+  UnmodifiableMapView<String, Chapter> get chapters =>
       UnmodifiableMapView(_chapters);
 
 // Example for displaying journal entry dates
@@ -230,7 +279,7 @@ class DBProvider extends ChangeNotifier {
   }
 
   Future<void> viewEntry(String uid, int prevView, User currentUser) async {
-    // TODO: Implement viewEntry functionality or remove this method if not needed.
+    
     await FirebaseFirestore.instance
         .collection('users')
         .doc(currentUser.uid)
@@ -257,143 +306,112 @@ class DBProvider extends ChangeNotifier {
   }
 
   Future<String?> _uploadPic(XFile xfile, String uid) async {
-    print('Uploading file ${xfile.name} at path ${xfile.path}');
+  final storageRef = FirebaseStorage.instance.ref();
+  final name = '${DateTime.now().millisecondsSinceEpoch}_${xfile.name}_${Random().nextInt(99999)}';
+  final imageRef = storageRef.child('users/$uid/entryImages/$name');
+  final metadata = SettableMetadata(contentType: 'image/jpeg');
 
-    final storageRef = FirebaseStorage.instance.ref();
-    // give it a unique name, e.g. based on timestamp + original name
-    final name =
-        '${DateTime.now().millisecondsSinceEpoch}_${xfile.name}_${Random().nextInt(99999)}';
-
-    final imageRef = storageRef.child('users/$uid/entryImages/$name');
-    final metadata = SettableMetadata(contentType: 'image/jpeg');
-
-    try {
-      if (kIsWeb) {
-        // read image into memory
-        final bytes = await xfile.readAsBytes();
-        await imageRef.putData(bytes, metadata);
-      } else {
-        // on mobile/desktop you still have a real File path
-        await imageRef.putFile(File(xfile.path), metadata);
-      }
-      return await imageRef.getDownloadURL();
-    } on FirebaseException catch (e) {
-      // handle/log e.code, etc.
-      e;
-      return null;
+  try {
+    if (kIsWeb) {
+      final bytes = await xfile.readAsBytes();
+      await imageRef.putData(bytes, metadata);
+    } else {
+      await imageRef.putFile(File(xfile.path), metadata);
     }
+    return await imageRef.getDownloadURL();
+  } on FirebaseException catch (e) {
+    // This catches specific Firebase errors (e.g., permissions)
+    print('Firebase error during upload for ${xfile.name}: ${e.code}');
+    return null; // Return null on failure, don't throw
+  } catch (e, stackTrace) {
+    // MODIFICATION: Add a generic catch-all for other errors
+    print('Generic error during upload for ${xfile.name}: $e');
+    print(stackTrace);
+    return null; // Return null on failure, don't throw
+  }
+}
+
+
+// MODIFICATION: Refactored to throw on error instead of using callbacks for completion/error handling
+Future<String> saveEntryToFirestore({
+  required User currentUser,
+  String? chapterId,
+  required List<Map<String, TextEditingController>> activityControllers,
+  required TextEditingController textController,
+  required TextEditingController locationTextController,
+  required DateTime selectedDate,
+  required List<XFile> imagePaths,
+  void Function(int uploadedCount, int totalCount)? onProgress,
+}) async { // Returns the new entry ID on success
+  final uid = currentUser.uid;
+  final activities = activityControllers.map((controllerMap) {
+    return {
+      'name': controllerMap['name']?.text ?? '',
+      'description': controllerMap['description']?.text ?? '',
+    };
+  }).toList();
+
+  // The try/catch is removed from here. It will be handled in the UI.
+  // This makes the provider logic reusable and decoupled from the UI.
+  
+  // 1) UPLOAD PHOTOS
+  final int total = imagePaths.length;
+  int uploaded = 0;
+  onProgress?.call(0, total); // Initial progress
+
+  final List<Future<String?>> uploadFutures = imagePaths.map((xfile) {
+    return _uploadPic(xfile, uid).then((url) {
+      uploaded++;
+      onProgress?.call(uploaded, total);
+      return url;
+    });
+  }).toList();
+
+  final List<String?> maybeUrls = await Future.wait(uploadFutures);
+  final List<String> cloudStorageImgUrls = maybeUrls.whereType<String>().toList();
+
+  // 2) ADD FIRESTORE DOCUMENT
+  final docRef = await FirebaseFirestore.instance
+      .collection('users')
+      .doc(uid)
+      .collection('entries')
+      .add({
+    'entry': textController.text,
+    'location': locationTextController.text,
+    'activities': activities,
+    'date': selectedDate.toIso8601String(),
+    'timestamp': Timestamp.now(),
+    'imgUrls': cloudStorageImgUrls,
+  });
+
+  // 3) UPDATE LOCAL STATE
+  _journalEntries[docRef.id] = JournalEntry(
+    id: docRef.id,
+    entry: textController.text,
+    location: locationTextController.text,
+    activities: activities,
+    date: selectedDate,
+    timestamp: Timestamp.now().toDate(),
+    imgUrls: cloudStorageImgUrls,
+    views: 0,
+  );
+  _journalEntryDates.add({'id': docRef.id, 'date': selectedDate});
+  _journalEntryDates.sort((a, b) => (b['date'] as DateTime).compareTo(a['date'] as DateTime));
+  
+
+  // 4) OPTIONALLY ATTACH TO A CHAPTER
+  if (chapterId != null) {
+    await attachEntryToChapter(chapterId, docRef.id);
   }
 
-  Future<void> saveEntryToFirestore({
-    required BuildContext context,
-    required User currentUser,
-    String? chapterId,
-    required List<Map<String, TextEditingController>> activityControllers,
-    required TextEditingController textController,
-    required TextEditingController locationTextController,
-    required DateTime selectedDate,
-    required List<XFile> imagePaths, // local file paths of picked images
-    // NEW:
-    void Function(int uploadedCount, int totalCount)? onProgress,
-    VoidCallback? onComplete,
-  }) async {
-    // currentUser is required and non-nullable
-    final uid = currentUser.uid;
+  // 5) UPDATE “lastUse” TIMESTAMP FOR USER
+  await FirebaseFirestore.instance.collection('users').doc(uid).set(
+      {'lastUse': FieldValue.serverTimestamp()}, SetOptions(merge: true));
 
-    // Build activities list
-    final activities = activityControllers.map((controllerMap) {
-      return {
-        'name': controllerMap['name']?.text ?? '',
-        'description': controllerMap['description']?.text ?? '',
-      };
-    }).toList();
-
-    try {
-      // 1) UPLOAD PHOTOS IN PARALLEL, REPORTING PROGRESS
-      final int total = imagePaths.length;
-      int uploaded = 0;
-
-      // Create a List<Future<String?>> but wrap each with a `.then(...)` that calls onProgress
-      final List<Future<String?>> uploadFutures = imagePaths.map((xfile) {
-        return _uploadPic(xfile, uid).then((url) {
-          // Each time one single upload finishes, increment & report:
-          uploaded++;
-          if (onProgress != null) {
-            if (uploaded < total) {
-              onProgress(
-                  uploaded, total); // e.g. "1/7 uploaded" … "6/7 uploaded"
-            } else {
-              // uploaded == total
-              onProgress(total, total); // "7/7 uploaded"
-            }
-          }
-          return url; // pass along the URL (or null) for Future.wait to collect
-        });
-      }).toList();
-
-      // Wait until all finish (in parallel)
-      final List<String?> maybeUrls = await Future.wait(uploadFutures);
-      print("maybeUrls: $maybeUrls");
-      final List<String> cloudStorageImgUrls =
-          maybeUrls.whereType<String>().toList();
-      print("cloudStorageImgUrls: $cloudStorageImgUrls");
-      // At this point, we have already called onProgress(total, total). Caller can interpret that as:
-      // "All photos uploaded. Now saving the entry…"
-
-      // 2) ADD FIRESTORE DOCUMENT IN ONE SHOT
-      final docRef = await FirebaseFirestore.instance
-          .collection('users')
-          .doc(uid)
-          .collection('entries')
-          .add({
-        'entry': textController.text,
-        'location': locationTextController.text,
-        'activities': activities,
-        'date': selectedDate.toIso8601String(),
-        'timestamp': Timestamp.now(),
-        'imgUrls': cloudStorageImgUrls,
-      });
-
-      // 3) UPDATE LOCAL STATE
-      _journalEntries[docRef.id] = JournalEntry(
-        id: docRef.id,
-        entry: textController.text,
-        location: locationTextController.text,
-        activities: activities,
-        date: selectedDate,
-        timestamp: Timestamp.now().toDate(),
-        // NOTE: store cloud URLs, not local file paths
-        imgUrls: cloudStorageImgUrls,
-        views: 0,
-      );
-      _journalEntryDates.add({'id': docRef.id, 'date': selectedDate});
-      _journalEntryDates.sort(
-          (a, b) => (b['date'] as DateTime).compareTo(a['date'] as DateTime));
-      notifyListeners();
-
-      // 4) OPTIONALLY ATTACH TO A CHAPTER
-      if (chapterId != null) {
-        await _attachEntryToChapter(context, chapterId, docRef.id);
-      }
-
-      // 5) NAVIGATE BACK (CLOSE ANY SCREENS AS BEFORE)
-      Navigator.pop(context);
-
-      // 6) UPDATE “lastUse” TIMESTAMP FOR USER
-      await FirebaseFirestore.instance.collection('users').doc(uid).set(
-          {'lastUse': FieldValue.serverTimestamp()}, SetOptions(merge: true));
-
-      // 7) CALL onComplete() TO SIGNAL “ENTRY SAVED”
-      if (onComplete != null) {
-        onComplete();
-      }
-    } catch (e) {
-      // If anything fails, show a SnackBar
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('Failed to save entry: $e')),
-      );
-    }
-  }
+  // 6) Return the ID and notify listeners
+  notifyListeners();
+  return docRef.id;
+}
 
   Future<void> saveChapter({
     required String name,
@@ -415,52 +433,63 @@ class DBProvider extends ChangeNotifier {
     });
 
     // 2) update your local cache
-    _chapters[docRef.id] = {
-      'id': docRef.id,
-      'name': name,
-      'description': description,
-      'image': imageUrl ?? '',
-      'createdAt': DateTime.now(),
-      'entryIDs': <String>[],
-    };
+    _chapters[docRef.id] = Chapter(
+      id: docRef.id,
+      name: name,
+      description: description,
+      image: imageUrl ?? '',
+      createdAt: DateTime.now(),
+      lastModified: DateTime.now(),
+      entryIDs: <String>[],
+    );
 
     notifyListeners();
   }
 
   Future<void> loadChapters() async {
-    final uid = _userId!;
-    try {
-      final querySnapshot = await FirebaseFirestore.instance
-          .collection('users')
-          .doc(uid)
-          .collection('chapters')
-          .get();
-
-      Map<String, Map<String, dynamic>> chaptersMap = {};
-      for (var doc in querySnapshot.docs) {
-        chaptersMap[doc.id] = {
-          'name': doc['name'] ?? 'No Name',
-          'description': doc['description'] ?? 'No Description',
-          'image': doc['image'] ?? '',
-          'createdAt': doc['createdAt'],
-          'entryIDs': List<String>.from(doc['entryIDs'] ?? []),
-          'id': doc.id,
-        };
-      }
-      _chapters = chaptersMap; // Store the chapters map
-      notifyListeners();
-    } catch (e) {
-      // print('Error fetching chapters: $e');
-    }
+  // 1. Guard Clause for null user
+  if (_userId == null) {
+    return;
   }
+  
+  print('Loading chapters for user: $_userId');
+  notifyListeners();
+
+  try {
+    // 2. Use .withConverter for type-safe data fetching
+    final chaptersRef = FirebaseFirestore.instance
+        .collection('users')
+        .doc(_userId)
+        .collection('chapters')
+        .withConverter<Chapter>(
+          fromFirestore: (snapshot, _) => Chapter.fromFirestore(snapshot),
+          toFirestore: (chapter, _) => {}, // Not needed for reading
+        );
+
+    final querySnapshot = await chaptersRef.get();
+
+    // The .docs are now List<QueryDocumentSnapshot<Chapter>>
+    // You can directly map them to your desired format.
+    final chaptersMap = { for (var doc in querySnapshot.docs) doc.id : doc.data() };
+    
+    _chapters = chaptersMap;
+    print('_chapters loaded successfully: ${chaptersMap.length} items.');
+  } catch (e, stackTrace) {
+    // 3. Proper error handling
+    
+    print('Error fetching chapters: $e');
+    print(stackTrace);
+  } finally {
+    notifyListeners(); // Notify listeners in all cases (success or failure)
+  }
+}
 
   // Fetch a chapter by its ID from the map
-  Map<String, dynamic>? getChapterById(String chapterId) {
+  Chapter? getChapterById(String chapterId) {
     return _chapters[chapterId];
   }
 
-  Future<void> _attachEntryToChapter(
-      context, String chapterId, String entryId) async {
+    Future<void> attachEntryToChapter(String chapterId, String entryId) async {
     final uid = _userId!;
     try {
       final chapterRef = FirebaseFirestore.instance
@@ -476,17 +505,14 @@ class DBProvider extends ChangeNotifier {
 
         await chapterRef.update({
           'entryIDs': currentEntryIDs,
+          'lastModified': FieldValue.serverTimestamp(),
         });
 
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text('Entry added to chapter successfully')),
-        );
+       
       }
     } catch (e) {
-      // print('Error updating chapter: $e');
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Failed to add entry to chapter')),
-      );
+      print('Error attaching entry to chapter: $e');
+      rethrow;
     }
   }
 

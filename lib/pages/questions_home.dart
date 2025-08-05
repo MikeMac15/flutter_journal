@@ -1,8 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:journal/features/_fade_route.dart';
 import 'package:journal/features/menu_buttons/image_button.dart';
-import 'package:journal/features/questionWalls/year_in_review_questions_page.dart';
-import 'package:journal/features/questionWalls/ranked_list_memories/ranked_list_home.dart';
+import 'package:journal/pages/chapters/chapters_page.dart';
+import 'package:journal/pages/questionWalls/year_in_review_questions_page.dart';
+import 'package:journal/pages/questionWalls/ranked_list_memories/ranked_list_home.dart';
 
 /// A layout page that shows a centered large button
 /// and a scrollable horizontal list of small cards.
@@ -25,7 +26,17 @@ class QuestionsHome extends StatelessWidget {
       'title': 'Questions',
       'page': const RankedListHome(),
       'asset': 'assets/images/questions/questionSky.png',
-    }
+    },
+    {
+      'title': 'Wall of Firsts',
+      'page': const RankedListHome(),
+      'asset': 'assets/images/questions/firsts.png',
+    },
+    {
+      'title': 'Chapters',
+      'page': const ChaptersPage(),
+      'asset': 'assets/images/questions/chapters.png',
+  }
     ];
 
     final smallCards = [
@@ -104,6 +115,28 @@ class QuestionsHome extends StatelessWidget {
                   backgroundImage: AssetImage('assets/images/default_header.png'),
                   onPressed: () => Navigator.of(context).push(
                     fadeRoute(largeButtons[1]['page'] as Widget),
+                  ),
+                ),
+              ),
+              const SizedBox(height: 24),
+              SizedBox(
+                width: MediaQuery.of(context).size.width * 0.8,
+                child: LargeImageButton(
+                  title: largeButtons[3]['title'] as String,
+                  backgroundImage: AssetImage(largeButtons[3]['asset'] as String),
+                  onPressed: () => Navigator.of(context).push(
+                    fadeRoute(largeButtons[3]['page'] as Widget),
+                  ),
+                ),
+              ),
+              const SizedBox(height: 24),
+              SizedBox(
+                width: MediaQuery.of(context).size.width * 0.8,
+                child: LargeImageButton(
+                  title: largeButtons[4]['title'] as String,
+                  backgroundImage: AssetImage(largeButtons[4]['asset'] as String),
+                  onPressed: () => Navigator.of(context).push(
+                    fadeRoute(largeButtons[4]['page'] as Widget),
                   ),
                 ),
               ),

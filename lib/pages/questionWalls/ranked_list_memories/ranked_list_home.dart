@@ -1,8 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:journal/features/_fade_route.dart';
-import 'package:journal/features/questionWalls/ranked_list_memories/_ranked_lists_list.dart';
-import 'package:journal/features/questionWalls/ranked_list_memories/ranked_list_class.dart';
-import 'package:journal/features/questionWalls/ranked_list_memories/ranked_list_memory.dart';
+import 'package:journal/pages/questionWalls/ranked_list_memories/_ranked_lists_list.dart';
+import 'package:journal/pages/questionWalls/ranked_list_memories/ranked_list_class.dart';
+import 'package:journal/pages/questionWalls/ranked_list_memories/ranked_list_memory.dart';
 import 'package:journal/features/text/text_entry.dart';
 import 'package:journal/providers/db_provider.dart';
 import 'package:provider/provider.dart';

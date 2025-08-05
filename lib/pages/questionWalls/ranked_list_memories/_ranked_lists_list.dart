@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:journal/features/menu_buttons/image_button.dart';
-import 'package:journal/features/questionWalls/ranked_list_memories/ranked_list_class.dart';
+import 'package:journal/pages/questionWalls/ranked_list_memories/ranked_list_class.dart';
 
 /// A reusable widget that displays a list of [RankedListClass]s.
 ///

@@ -1,5 +1,5 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
-import 'package:journal/features/questionWalls/YIR_Classes.dart';
+import 'package:journal/pages/questionWalls/yir_classes.dart';
 
 Future<List<Yir>> collectAllYir(String uid) async {
   if (uid.isEmpty) return [];

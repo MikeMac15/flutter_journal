@@ -135,12 +135,7 @@ class JournalRecentsListState extends State<JournalRecentsList> {
 
     return Scaffold(
       floatingActionButton: _buildViewSwitcher(),
-      body: Padding(
-        padding: EdgeInsets.symmetric(
-          horizontal: horizontalPadding,
-        ),
-        // Add a Column as the direct child of Padding
-        child: Column(
+      body:  Column(
           children: [
             // Now Expanded is a direct child of Column, which is correct
             Expanded(
@@ -156,7 +151,7 @@ class JournalRecentsListState extends State<JournalRecentsList> {
             ),
           ],
         ),
-      ),
+     
     );
   }
 }

@@ -24,6 +24,7 @@ dependencies:
   flutter_image_compress: ^2.4.0 
   web: ^1.1.1
   transparent_image: ^2.0.1
+  gap: ^3.0.1
 
 dev_dependencies:
   flutter_test:

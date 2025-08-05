@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:journal/features/_fade_route.dart';
-import 'package:journal/features/questionWalls/questions_home.dart';
+import 'package:journal/pages/questions_home.dart';
+import 'package:journal/pages/home.dart';
 import 'package:journal/pages/journal_entry_page.dart';
 import 'package:journal/pages/journal_recents_list.dart';
 import 'package:journal/pages/settings.dart';
@@ -43,8 +44,8 @@ class _MyHomePageState extends State<MyHomePage> {
       icon: Icons.home_outlined,
       selectedIcon: Icons.home,
       label: 'Home',
-      component: const Center(
-          child: Text('Home Page', style: TextStyle(fontSize: 24))),
+      component: 
+      Home(),
     ),
     MyPage(
       icon: Icons.cloud_outlined,

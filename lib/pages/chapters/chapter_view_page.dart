@@ -32,15 +32,13 @@ class ChapterDetailPage extends StatelessWidget {
     }
 
     // Extract fields from the chapterData map
-    final String chapterName = chapterData['name'] as String;
-    final String chapterDescription = chapterData['description'] as String;
+    final String chapterName = chapterData.name;
+    final String chapterDescription = chapterData.description;
     final String? chapterImageUrl =
-        (chapterData['image'] as String?)?.isNotEmpty == true
-            ? (chapterData['image'] as String)
-            : null;
+        chapterData.image.isNotEmpty == true ? chapterData.image : null;
     // entryIDs is a List<String> of journal entry document IDs.
     final List<String> entryIds =
-        List<String>.from(chapterData['entryIDs'] as List<dynamic>);
+        List<String>.from(chapterData.entryIDs as List<dynamic>);
 
     // Now, gather the JournalEntry objects for those IDs. DBProvider stores
     // everything in-memory already, so this is just a lookup.

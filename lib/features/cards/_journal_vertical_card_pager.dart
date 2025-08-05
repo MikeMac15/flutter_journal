@@ -44,14 +44,15 @@ class JournalVerticalPagerState extends State<JournalVerticalPager> {
       );
     }).toList();
 
-    return SafeArea(
-        child: widget.entries.isEmpty
-            ? const Center(child: CircularProgressIndicator())
-            // no Center() here so pager can expand
-            : SizedBox.expand(
+    return ConstrainedBox(
+                constraints: BoxConstraints(
+                  maxHeight: MediaQuery.of(context).size.height,
+                  maxWidth: MediaQuery.of(context).size.width,
+                ),
                 child: VerticalCardPager(
                   titles: titles,
                   images: cards,
+                  width: MediaQuery.of(context).size.width - 40,
                   // fontSize 0 is fine, but empty titles means no text
                   textStyle: TextStyle(fontSize: 0),
                   align: ALIGN.CENTER,
@@ -64,7 +65,8 @@ class JournalVerticalPagerState extends State<JournalVerticalPager> {
                     );
                   },
                 ),
-              ),
-      );
+              );
+            
+    
   }
 }

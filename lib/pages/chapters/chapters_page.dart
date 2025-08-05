@@ -24,7 +24,15 @@ class _ChaptersPageState extends State<ChaptersPage> {
   Future<List<Map<String, dynamic>>> _loadChapters() async {
     try {
       final chapters = Provider.of<DBProvider>(context, listen: false).chapters;
-      return chapters.values.toList();
+      return chapters.entries.map((entry) {
+        return {
+          'id': entry.value.id,
+          'name': entry.value.name,
+          'description': entry.value.description,
+          'image': entry.value.image,
+          'entryIDs': entry.value.entryIDs,
+        };
+      }).toList();
     } catch (e) {
       // print('Error fetching chapters: $e');
       return [];

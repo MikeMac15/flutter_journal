@@ -3,7 +3,7 @@ import 'package:journal/features/_fade_route.dart';
 import 'package:journal/features/calendar/_calendar_card.dart';
 import 'package:journal/features/menu_buttons/raised_button.dart';
 import 'package:journal/features/menu_buttons/top_menu_btn.dart';
-import 'package:journal/features/questionWalls/questions_home.dart';
+import 'package:journal/pages/questions_home.dart';
 import 'package:journal/pages/chapters/chapters_page.dart';
 import 'package:journal/pages/journal_entry_page.dart';
 import 'package:journal/pages/journal_recents_list.dart';

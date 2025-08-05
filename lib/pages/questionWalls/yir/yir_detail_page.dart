@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
-import 'package:journal/features/questionWalls/YIR_Classes.dart';
-import 'package:journal/features/questionWalls/yir/yir_ranked_lists.dart';
-import 'package:journal/features/questionWalls/yir/yir_recap_wall.dart';
+import 'package:journal/pages/questionWalls/yir/yir_ranked_lists.dart';
+import 'package:journal/pages/questionWalls/yir/yir_recap_wall.dart';
+import 'package:journal/pages/questionWalls/yir_classes.dart';
 import 'package:provider/provider.dart';
 import 'package:journal/providers/db_provider.dart';
 

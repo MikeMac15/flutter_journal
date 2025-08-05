@@ -11,6 +11,7 @@ import 'package:journal/pages/journal_entry/chapter_selector.dart';
 import 'package:journal/pages/journal_entry/entry_date_picker.dart';
 import 'package:journal/features/text/text_entry.dart';
 import 'package:journal/features/pictures/view_chosen_images.dart';
+import 'package:journal/pages/journal_view_page.dart';
 import 'package:journal/providers/db_provider.dart';
 import 'package:provider/provider.dart';
 
@@ -220,7 +221,7 @@ class _JournalEntryPageState extends State<JournalEntryPage> {
                 subtitle: Text(
                   _selectedChapterId != null
                       ? (Provider.of<DBProvider>(context, listen: false)
-                              .getChapterById(_selectedChapterId!)?['name'] ??
+                              .getChapterById(_selectedChapterId!)?.name ??
                           "Unknown")
                       : "Select a chapter",
                 ),
@@ -327,87 +328,87 @@ class _JournalEntryPageState extends State<JournalEntryPage> {
     );
   }
 
-  void _saveEntry() {
-    // 1) Show a non-dismissible dialog with initial text "0/total photos uploaded"
-    showDialog(
-      context: context,
-      barrierDismissible: false, // user cannot tap outside to close
-      builder: (dialogContext) {
-        // This local variable holds the text shown in the dialog
-        final List<XFile> imagePathsSnapshot = List.from(_chosenPhotos);
-        String progressText = '0/${imagePathsSnapshot.length} photos uploaded';
+  void _saveEntry() async { // Make this function async
+  final dbProvider = Provider.of<DBProvider>(context, listen: false);
+  final imagePathsSnapshot = List.from(_chosenPhotos);
+  
+  // If there's nothing to save, don't do anything.
+  if (_textController.text.isEmpty && imagePathsSnapshot.isEmpty) {
+    ScaffoldMessenger.of(context).showSnackBar(
+      const SnackBar(content: Text('Cannot save an empty entry.')),
+    );
+    return;
+  }
 
-        // StatefulBuilder lets us call setState(...) inside the dialog
-        return StatefulBuilder(
-          builder: (context, setState) {
-            // Use addPostFrameCallback to run once when the dialog is built
-            WidgetsBinding.instance.addPostFrameCallback((_) {
-              // Only run saveEntryToFirestore ONCE. We check that progressText still starts with "0/"
-              if (progressText.startsWith('0/')) {
-                Provider.of<DBProvider>(context, listen: false)
-                    .saveEntryToFirestore(
-                  context: context,
-                  currentUser: _currentUser!,
-                  chapterId: _selectedChapterId,
-                  activityControllers: _activityControllers,
-                  textController: _textController,
-                  locationTextController: _locationTextController,
-                  selectedDate: _selectedDate,
-                  imagePaths: imagePathsSnapshot,
+  // Use a ValueNotifier to update the dialog text cleanly.
+  final progressNotifier = ValueNotifier<String>('Starting upload...');
 
-                  // Each time one photo finishes, this is called:
-                  onProgress: (uploadedCount, totalCount) {
-                    setState(() {
-                      if (uploadedCount < totalCount) {
-                        progressText =
-                            '$uploadedCount/$totalCount photos uploaded';
-                      } else {
-                        // uploadedCount == totalCount
-                        progressText =
-                            'All photos uploaded. Saving Journal entry.';
-                      }
-                    });
-                  },
-
-                  // After the Firestore write itself finishes, this is called:
-                  onComplete: () {
-                    setState(() {
-                      progressText = 'Journal Entry Saved.';
-                    });
-                    // Wait a short moment so the user sees "Journal Entry Saved."
-                    Future.delayed(const Duration(milliseconds: 500), () {
-                      if (mounted) {
-                        // Safely pop the dialog
-                        Navigator.of(dialogContext).pop();
-
-                        // Then schedule the page pop on the next frame
-                        Future.microtask(() {
-                          if (mounted) {
-                            Navigator.of(context).pop();
-                          }
-                        });
-                      }
-                    });
-                  },
-                );
-              }
-            });
-
-            // The actual dialog UI: a spinner + the changing progressText
-            return AlertDialog(
-              content: Row(
-                children: [
-                  const CircularProgressIndicator(),
-                  const SizedBox(width: 16),
-                  Flexible(child: Text(progressText)),
-                ],
-              ),
-            );
-          },
+  // Show the dialog
+  showDialog(
+    context: context,
+    barrierDismissible: false,
+    builder: (dialogContext) => ValueListenableBuilder<String>(
+      valueListenable: progressNotifier,
+      builder: (context, progressText, child) {
+        return AlertDialog(
+          content: Row(
+            children: [
+              const CircularProgressIndicator(),
+              const SizedBox(width: 16),
+              Flexible(child: Text(progressText)),
+            ],
+          ),
         );
       },
+    ),
+  );
+
+  // --- Main Logic with try/catch ---
+  try {
+    final newEntryId = await dbProvider.saveEntryToFirestore(
+      currentUser: _currentUser!,
+      chapterId: _selectedChapterId,
+      activityControllers: _activityControllers,
+      textController: _textController,
+      locationTextController: _locationTextController,
+      selectedDate: _selectedDate,
+      imagePaths: imagePathsSnapshot.cast<XFile>(),
+      onProgress: (uploadedCount, totalCount) {
+        if (uploadedCount < totalCount) {
+          progressNotifier.value = '$uploadedCount/$totalCount photos uploaded';
+        } else {
+          progressNotifier.value = 'All photos uploaded. Saving entry...';
+        }
+      },
+    );
+
+    // SUCCESS CASE
+    if (!mounted) return;
+    Navigator.of(context).pop(); // Close the loading dialog
+    
+    // Navigate to the new entry page
+    Navigator.pushReplacement(
+      context,
+      MaterialPageRoute(
+        builder: (_) => JournalEntryViewPage(entryId: newEntryId),
+      ),
+    );
+
+  } catch (e) {
+    // FAILURE CASE
+    if (!mounted) return;
+    Navigator.of(context).pop(); // IMPORTANT: Close the dialog on error!
+
+    // Show an error message
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(
+        content: Text('Failed to save entry: $e'),
+        backgroundColor: Colors.red,
+      ),
     );
   }
+}
+
 }
 
 // Placeholder AuthErrorPage

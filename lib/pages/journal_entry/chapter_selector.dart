@@ -30,8 +30,8 @@ class _ChapterSelectorState extends State<ChapterSelector> {
         if (chapters.isNotEmpty) {
           _chapterNames = chapters.entries.map((entry) {
             return {
-              'id': entry.value['id'] as String,
-              'name': entry.value['name'] as String,
+              'id': entry.value.id,
+              'name': entry.value.name,
             };
           }).toList();
         }

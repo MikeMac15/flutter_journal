@@ -31,7 +31,7 @@ class LargeImageButton extends StatelessWidget {
           children: [
             Image(
               image: backgroundImage,
-              fit: BoxFit.cover,
+              fit: BoxFit.fitWidth,
             ),
             Material(
               color: Colors.black.withOpacity(0.3),
