@@ -1,43 +1,35 @@
-# Flutter & Dart
-.buildlog/
+# Flutter / Dart
 .dart_tool/
-.packages
-.pub-cache/
+.buildlog/
+.build/
 .flutter-plugins
 .flutter-plugins-dependencies
+.flutter_web_plugins
 .melos_tool/
+.packages
+.pub-cache/
+.pub/
 coverage/
 build/
 
-# Firebase Hosting & cache
+# Firebase Hosting + emulator cache (generated)
 .firebase/
 
 # Android
-**/local.properties
-**/.gradle/
-**/build/
+android/.gradle/
 android/app/.cxx/
 android/app/*.jks
 android/app/key.properties
+android/app/build/
+android/build/
 
-# iOS/macOS
+# iOS / macOS (generated/ephemeral)
 ios/Pods/
 ios/.symlinks/
 ios/Flutter/Flutter.framework
 ios/Flutter/Flutter.podspec
-**/*.xcuserstate
-**/xcuserdata/
-*.ipa
-*.dSYM.zip
-*.mobileprovision
-*.p12
-*.pem
-
-# Web build (if you ever build to web/)
-web/.dart_tool/
-web/.firebase/
-# (If you use `flutter build web`, ignore build/web/)
-build/web/
+ios/Flutter/Generated.xcconfig
+macos/Flutter/ephemeral/
 
 # IDE/OS
 .idea/
@@ -50,114 +42,5 @@ build/web/
 *.env.*
 serviceAccount*.json
 
-
-
-# Miscellaneous
-*.class
-*.log
-*.pyc
-*.swp
-.DS_Store
-.atom/
-.build/
-.buildlog/
-.history
-.svn/
-.swiftpm/
-migrate_working_dir/
-
-# IntelliJ related
-*.iml
-*.ipr
-*.iws
-.idea/
-
-# The .vscode folder contains launch configuration and tasks you configure in
-# VS Code which you may wish to be included in version control, so this line
-# is commented out by default.
-#.vscode/
-
-# Flutter/Dart/Pub related
-**/doc/api/
-**/ios/Flutter/.last_build_id
-.dart_tool/
-.flutter-plugins
-.flutter-plugins-dependencies
-.pub-cache/
-.pub/
-/build/
-
-# Symbolication related
-app.*.symbols
-
-# Obfuscation related
-app.*.map.json
-
-# Android Studio will place build artifacts here
-/android/app/debug
-/android/app/profile
-/android/app/release
-
-
-# Flutter / Dart ################################################
-
-# Generated files
-.dart_tool/
-.packages
-.pub/
-.buildlog/
-.build/
-build/
-.flutter-plugins
-.flutter-plugins-dependencies
-.flutter-configuration-cache
-.flutter_web_plugins
-
-# Metadata
-*.lock
-metadata
-pubspec.lock
-
-# IDE settings
-.idea/
-.vscode/
-*.iml
-
-# macOS
-macos/Flutter/ephemeral/
-
-# iOS
-ios/Pods/
-ios/.symlinks/
-ios/Flutter/Flutter.framework
-ios/Flutter/Flutter.podspec
-ios/Flutter/Generated.xcconfig
-ios/ServiceDefinitions.json
-
-# Android
-android/.gradle/
-android/app/**/local.properties
-android/*.iml
-android/app/build/
-android/build/
-
-# Web build artifacts
+# Web build artifacts (if you build web)
 build/web/
-
-# Firebase local emulator & hosting cache
-.firebase/
-.firebase/*
-.firebase*/  
-.firebase/photojournal-a784e/
-.firebase/hosting.LmZpcmViYXNlL3Bob3Rvam91cm5hbC1hNzg0ZS9ob3N0aW5n.cache
-.firebase/photojournal-a784e/hosting/main.dart.js
-.firebase/photojournal-a784e/hosting/.last_build_id
-.firebase/photojournal-a784e/hosting/flutter_bootstrap.js
-hosting/
-hosting.*  
-
-.metadata
-hosting
-firebase.json
-ios
-android
