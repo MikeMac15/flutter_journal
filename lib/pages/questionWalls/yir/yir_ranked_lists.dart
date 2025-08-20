@@ -1,7 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:journal/pages/questionWalls/yir_classes.dart';
 
-
 import 'package:journal/providers/db_provider.dart';
 import 'package:provider/provider.dart';
 
@@ -62,6 +61,8 @@ class _YirRankedListsState extends State<YirRankedLists> {
     final dbProvider = Provider.of<DBProvider>(context, listen: false);
 
     return ListView.builder(
+      shrinkWrap: true,
+      physics: const NeverScrollableScrollPhysics(),
       padding: EdgeInsets.all(MediaQuery.of(context).size.width * 0.05),
       itemCount: widget.yir.categories.length,
       itemBuilder: (context, catIndex) {
@@ -141,12 +142,12 @@ class _YirRankedListsState extends State<YirRankedLists> {
                             child: Text('${i + 1}'),
                           ),
                           title: Text(item.text),
-                          trailing: 
-                          Row(
+                          trailing: Row(
                             mainAxisSize: MainAxisSize.min,
                             children: [
                               IconButton(
-                                icon: const Icon(Icons.delete, color: Colors.red),
+                                icon:
+                                    const Icon(Icons.delete, color: Colors.red),
                                 onPressed: () async {
                                   await dbProvider.deleteItemFromCategory(
                                     widget.yir.year,
@@ -157,7 +158,7 @@ class _YirRankedListsState extends State<YirRankedLists> {
                                 },
                               ),
                               const Icon(Icons.drag_handle),
-                          ],
+                            ],
                           ),
                         );
                       }),
@@ -170,7 +171,6 @@ class _YirRankedListsState extends State<YirRankedLists> {
                             child: Text('${i + 1}'),
                           ),
                           title: Text(category.items[i].text),
-                          
                         );
                       }),
                     ),

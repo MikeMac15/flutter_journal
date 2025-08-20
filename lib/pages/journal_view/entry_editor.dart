@@ -1,10 +1,10 @@
-
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/material.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:intl/intl.dart';
 import 'package:journal/features/pictures/_my_image_picker.dart';
 import 'package:journal/providers/db_provider.dart';
+import 'package:journal/services/image_compressor.dart';
 import 'package:provider/provider.dart';
 
 class EntryEditor extends StatefulWidget {
@@ -36,9 +36,9 @@ class EntryEditor extends StatefulWidget {
 }
 
 class _EntryEditorState extends State<EntryEditor> {
-  final MyImagePicker _picker = MyImagePicker();
   final List<XFile> _newImages = [];
-  
+  final MyImagePicker _myImagePicker = MyImagePicker();
+
   late final DBProvider dbProvider;
 
   @override
@@ -47,41 +47,114 @@ class _EntryEditorState extends State<EntryEditor> {
     dbProvider = Provider.of<DBProvider>(context, listen: false);
   }
 
-  Future<void> _saveEdits(String newEntry, String newLocation, DateTime newDate,
-      List<XFile>? newImages) async {
-    // Update Firestore
+  Future<void> _getImageFromGallery() async {
+    try {
+      final files = await _myImagePicker.pickMultipleImagesFromGallery();
+      if (files.isEmpty) return;
 
-    final docRef = FirebaseFirestore.instance
+      final chosen = await Future.wait(files.map((file) async {
+        final metadata = await extractCorePhotoMetadata(file);
+        return ImageWithMetadata(file: file, metadata: metadata);
+      }));
+
+      // Optional de-dupe by path
+      final existingPaths = _newImages.map((x) => x.path).toSet();
+      final unique =
+          chosen.where((im) => !existingPaths.contains(im.file.path));
+
+      if (mounted) {
+        setState(() {
+          _newImages.addAll(unique.map((im) => im.file));
+        });
+      }
+    } catch (e, st) {
+      debugPrint('pickMultipleImagesFromGallery failed: $e\n$st');
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text('Could not pick images')),
+        );
+      }
+    }
+  }
+
+  Future<void> _saveEdits(
+    String newEntry,
+    String newLocation,
+    DateTime newDate,
+    List<XFile>? newImages,
+  ) async {
+    final uid = dbProvider.userId;
+    if (uid == null) throw StateError('userId is null');
+
+    final fs = FirebaseFirestore.instance;
+    final docRef = fs
         .collection('users')
-        .doc(dbProvider.userId)
+        .doc(uid)
         .collection('entries')
         .doc(widget.entryId);
 
-    try {
-      if (newImages != null && newImages.isNotEmpty) {
-        // Upload new images and get their URLs
-        final newImgUrls = await dbProvider.uploadMultiPics(newImages);
-        await docRef.update({
-          'entry': newEntry,
-          'location': newLocation,
-          'date': newDate.toIso8601String(),
-          'imgUrls': [...widget._imgUrls, ...newImgUrls],
-        });
-      } else {
-        await docRef.update({
-          'entry': newEntry,
-          'location': newLocation,
-          'date': newDate.toIso8601String(),
-        });
+    // 1) Upload first
+    List<String> newImgUrls = [];
+    if (newImages != null && newImages.isNotEmpty) {
+      try {
+        newImgUrls = await dbProvider.uploadMultiPics(newImages);
+      } catch (e, st) {
+        debugPrint('uploadMultiPics failed: $e\n$st');
+        if (mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(content: Text('Image upload failed: $e')),
+          );
+        }
+        return;
       }
+    }
+
+    // 2) Transactional update
+    try {
+      await fs.runTransaction((tx) async {
+        final snap = await tx.get(docRef);
+        if (!snap.exists) {
+          tx.set(
+              docRef,
+              {
+                'entry': newEntry,
+                'location': newLocation,
+                'date': newDate.toIso8601String(),
+                'imgUrls': newImgUrls,
+                'updatedAt': FieldValue.serverTimestamp(),
+              },
+              SetOptions(merge: true));
+          return;
+        }
+
+        final update = <String, dynamic>{
+          'entry': newEntry,
+          'location': newLocation,
+          'date': newDate.toIso8601String(),
+          'updatedAt': FieldValue.serverTimestamp(),
+        };
+        if (newImgUrls.isNotEmpty) {
+          update['imgUrls'] = FieldValue.arrayUnion(newImgUrls);
+        }
+        tx.update(docRef, update);
+      });
 
       if (mounted) {
+        setState(() => _newImages.clear()); // prevent re-uploads next time
         ScaffoldMessenger.of(context).showSnackBar(
           const SnackBar(content: Text('Journal entry updated')),
         );
       }
       widget.onEntryUpdated?.call();
-    } catch (e) {
+    } on FirebaseException catch (e, st) {
+      debugPrint('Firestore update failed (${e.code}): ${e.message}\n$st');
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('Failed to update: ${e.code}')),
+        );
+      }
+    } catch (e, st) {
+      debugPrint('Unknown error updating entry: $e\n$st');
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(content: Text('Failed to update: $e')),
@@ -133,8 +206,8 @@ class _EntryEditorState extends State<EntryEditor> {
                             final picked = await showDatePicker(
                               context: context,
                               initialDate: newDate,
-                              firstDate: DateTime(2000),
-                              lastDate: DateTime(2100),
+                              firstDate: DateTime(1950),
+                              lastDate: DateTime.now(),
                             );
                             if (picked != null && picked != newDate) {
                               setState(() {
@@ -168,15 +241,40 @@ class _EntryEditorState extends State<EntryEditor> {
                         // Image Picker Button
                         ElevatedButton.icon(
                           onPressed: () async {
-                            final List<XFile> picked =
-                                await _picker.pickMultipleImagesFromGallery();
-                            if (picked.isNotEmpty) {
-                              setState(() => _newImages.addAll(picked));
-                            }
+                            await _getImageFromGallery();
+                            print(_newImages);
                           },
                           icon: const Icon(Icons.photo),
                           label: const Text('Add Photos'),
                         ),
+                        const SizedBox(height: 12),
+                        const SizedBox(height: 12),
+                        const SizedBox(height: 12),
+                        ElevatedButton.icon(
+                          onPressed: () async {
+                            final snap = await FirebaseFirestore.instance
+                                .collection('users')
+                                .doc(dbProvider.userId)
+                                .collection('entries')
+                                .doc(widget.entryId)
+                                .get();
+                            final urls = List<String>.from(
+                                (snap.data()?['imgUrls'] ?? []) as List);
+                            if (urls.isEmpty) {
+                              ScaffoldMessenger.of(context).showSnackBar(
+                                const SnackBar(
+                                    content: Text('No photos to delete')),
+                              );
+                              return;
+                            }
+                            await dbProvider.deletePicture(
+                                urls.first, widget.entryId);
+                          },
+                          icon: const Icon(Icons.delete_forever),
+                          label: const Text('Delete First Photo'),
+                        ),
+                        const SizedBox(height: 12),
+                        const SizedBox(height: 12),
                         const SizedBox(height: 12),
 
                         // ----- New Images Preview -----
@@ -184,7 +282,6 @@ class _EntryEditorState extends State<EntryEditor> {
                         //   child: ViewThumbnailImages(photoSources: _newImages),
                         // ),
                         // Thumbnails
-
                       ],
                     ),
                   ),
@@ -199,7 +296,8 @@ class _EntryEditorState extends State<EntryEditor> {
                       onPressed: () async {
                         final newEntry = entryController.text.trim();
                         final newLocation = locationController.text.trim();
-
+                        print(
+                            'saving changes for entry: $newEntry, $_newImages');
                         // Save edits including the date
                         await _saveEdits(
                             newEntry, newLocation, newDate, _newImages);

@@ -1,3 +1,57 @@
+# Flutter & Dart
+.buildlog/
+.dart_tool/
+.packages
+.pub-cache/
+.flutter-plugins
+.flutter-plugins-dependencies
+.melos_tool/
+coverage/
+build/
+
+# Firebase Hosting & cache
+.firebase/
+
+# Android
+**/local.properties
+**/.gradle/
+**/build/
+android/app/.cxx/
+android/app/*.jks
+android/app/key.properties
+
+# iOS/macOS
+ios/Pods/
+ios/.symlinks/
+ios/Flutter/Flutter.framework
+ios/Flutter/Flutter.podspec
+**/*.xcuserstate
+**/xcuserdata/
+*.ipa
+*.dSYM.zip
+*.mobileprovision
+*.p12
+*.pem
+
+# Web build (if you ever build to web/)
+web/.dart_tool/
+web/.firebase/
+# (If you use `flutter build web`, ignore build/web/)
+build/web/
+
+# IDE/OS
+.idea/
+.vscode/
+*.iml
+.DS_Store
+
+# Secrets (defense-in-depth)
+*.env
+*.env.*
+serviceAccount*.json
+
+
+
 # Miscellaneous
 *.class
 *.log

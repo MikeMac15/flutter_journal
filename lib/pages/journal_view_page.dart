@@ -19,7 +19,7 @@ class JournalEntryViewPageState extends State<JournalEntryViewPage> {
     Future<void> _refreshEntryData() async {
       // Trigger a re-fetch of the entry data
       final dbProvider = Provider.of<DBProvider>(context, listen: false);
-      await dbProvider.fetchUpdatedEntry(widget.entryId);
+      dbProvider.getJournalEntryById(widget.entryId);
     }
   @override
   Widget build(BuildContext context) {
@@ -76,8 +76,8 @@ class JournalEntryViewPageState extends State<JournalEntryViewPage> {
                         const SizedBox(width: 8),
                         Expanded(
                           child: Text(
-                            entryData.location.isNotEmpty
-                                ? entryData.location
+                            (entryData.location ?? '').isNotEmpty
+                                ? entryData.location ?? 'No location set'
                                 : 'No location set',
                             style: theme.textTheme.bodyLarge,
                           ),
@@ -106,7 +106,7 @@ class JournalEntryViewPageState extends State<JournalEntryViewPage> {
                         ),
                         const SizedBox(height: 8),
                         Text(
-                          entryData.entry,
+                          entryData.entry ?? '',
                           style: theme.textTheme.bodyMedium,
                         ),
                       ],
@@ -116,7 +116,7 @@ class JournalEntryViewPageState extends State<JournalEntryViewPage> {
                 const SizedBox(height: 16),
 
                 // Activities Card
-                entryData.activities.isEmpty
+                entryData.activities != []
                     ?  const SizedBox.shrink()
                     : Card(
                   elevation: 2,
@@ -134,9 +134,9 @@ class JournalEntryViewPageState extends State<JournalEntryViewPage> {
                               ?.copyWith(fontWeight: FontWeight.bold),
                         ),
                         const SizedBox(height: 8),
-                        entryData.activities.isNotEmpty
+                        entryData.activities?.isNotEmpty == true
                             ? ActivityList(
-                                savedActivities: entryData.activities)
+                                savedActivities: entryData.activities ?? [])
                             : Text(
                                 'No activities for this entry',
                                 style: theme.textTheme.bodyMedium,
@@ -184,11 +184,11 @@ class JournalEntryViewPageState extends State<JournalEntryViewPage> {
                 EntryEditor(
                   entryId: widget.entryId,
                   onEntryUpdated: _refreshEntryData, // Triggers re-fetch after edit
-                  entry: entryData.entry,
-                  location: entryData.location,
+                  entry: entryData.entry ?? '',
+                  location: entryData.location ?? '',
                   entryDate: entryData.date,
                   imgUrls: entryData.imgUrls,
-                  activities: entryData.activities,
+                  activities: entryData.activities ?? [],
                 ),
 
                 const SizedBox(height: 24),

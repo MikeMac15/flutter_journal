@@ -59,8 +59,7 @@ class _JournalPostCardState extends State<JournalPostCard>
     //     : (entry['date'] as Timestamp).toDate();
     // final formattedDate = DateFormat.yMMMMd().format(date);
     final imgUrls = entry.imgUrls;
-    final imgUrl =
-        (imgUrls.isNotEmpty) ? imgUrls[0] : null;
+    final imgUrl = (imgUrls.isNotEmpty) ? imgUrls[0] : null;
 
     return Card(
       shape: RoundedRectangleBorder(
@@ -79,8 +78,19 @@ class _JournalPostCardState extends State<JournalPostCard>
             children: [
               // 1) background image layer
               if (imgUrl != null)
-                Image.network(imgUrl, fit: BoxFit.cover)
+                // Use FadeInImage for a better UX
+                FadeInImage.assetNetwork(
+                  placeholder:
+                      'assets/images/noPhotoPlaceholder.png', // Or another placeholder
+                  image: imgUrl,
+                  fit: BoxFit.cover,
+                  // Optional: Add an error builder for failed loads
+                  imageErrorBuilder: (context, error, stackTrace) {
+                    return Container(color: Colors.grey[300]); // Fallback UI
+                  },
+                )
               else
+                // This is your existing fallback, which is perfect
                 Container(color: Colors.grey[300]),
 
               // 2) fade-in text overlay
@@ -89,8 +99,8 @@ class _JournalPostCardState extends State<JournalPostCard>
                 child: Align(
                   alignment: Alignment.bottomCenter,
                   child: JournalCardTextOverlay(
-                    location: entry.location,
-                    snippet: entry.entry,
+                    location: entry.location ?? '',
+                    snippet: entry.entry ?? '',
                     date: entry.date,
                     scale: widget.scale,
                     onViewFull: widget.onViewFull,
@@ -104,5 +114,3 @@ class _JournalPostCardState extends State<JournalPostCard>
     );
   }
 }
-  
-

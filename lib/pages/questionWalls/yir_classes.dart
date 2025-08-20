@@ -19,12 +19,10 @@ class YirItem {
     };
   }
 
-  factory YirItem.fromMap(Map<String, dynamic> map) {
-    return YirItem(
-      text: map['text'],
-      memoryId: List<String>.from(map['memoryId'] ?? []),
-    );
-  }
+  factory YirItem.fromMap(Map<String, dynamic> map) => YirItem(
+  text: (map['text'] ?? '').toString(),
+  memoryId: List<String>.from((map['memoryId'] as List?)?.map((e) => e.toString()) ?? const []),
+);
 }
 
 class YirCategory {
@@ -44,13 +42,12 @@ class YirCategory {
   }
 
   factory YirCategory.fromMap(Map<String, dynamic> map) {
-    return YirCategory(
-      title: map['title'],
-      items: (map['items'] as List)
-          .map((item) => YirItem.fromMap(item))
-          .toList(),
-    );
-  }
+  final raw = (map['items'] as List?) ?? const [];
+  return YirCategory(
+    title: (map['title'] ?? '').toString(),
+    items: raw.map((e) => YirItem.fromMap(Map<String, dynamic>.from(e as Map))).toList(),
+  );
+}
 }
 
 class YirRecap {

@@ -32,7 +32,7 @@ class RecentsGridView extends StatelessWidget {
         final entry = entries[i];
         final date = entry.date;
         final snippet = entry.entry;
-        final location = entry.location as String?;
+        final location = entry.location;
         final imgUrls = entry.imgUrls.cast<String>();
         
         return Card(
@@ -85,7 +85,7 @@ class RecentsGridView extends StatelessWidget {
                   SizedBox(height: 6 * scale),
                   Expanded(
                     child: Text(
-                      snippet,
+                      snippet ?? '',
                       maxLines: 3,
                       overflow: TextOverflow.ellipsis,
                       style: TextStyle(fontSize: 12 * scale, height: 1.3),

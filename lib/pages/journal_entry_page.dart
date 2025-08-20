@@ -12,7 +12,9 @@ import 'package:journal/pages/journal_entry/entry_date_picker.dart';
 import 'package:journal/features/text/text_entry.dart';
 import 'package:journal/features/pictures/view_chosen_images.dart';
 import 'package:journal/pages/journal_view_page.dart';
+import 'package:journal/pages/photo_entry/photo_entry.dart';
 import 'package:journal/providers/db_provider.dart';
+import 'package:journal/services/image_compressor.dart';
 import 'package:provider/provider.dart';
 
 import '../features/pictures/_my_image_picker.dart';
@@ -171,6 +173,32 @@ class _JournalEntryPageState extends State<JournalEntryPage> {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.stretch,
           children: [
+
+            //navigate to PhotoEntryPage button
+            Align(
+              alignment: Alignment.centerRight,
+              child: TextButton.icon(
+                onPressed: () {
+                  Navigator.push(
+                    context,
+                    MaterialPageRoute(
+                      builder: (context) => PhotoEntryPage(
+                      ),
+                    ),
+                  );
+                },
+                icon: const Icon(Icons.add_a_photo_outlined),
+                label: const Text("Add Photo Entry"),
+                style: TextButton.styleFrom(
+                  foregroundColor: theme.colorScheme.primary,
+                  textStyle: theme.textTheme.labelLarge?.copyWith(
+                    fontSize: 16,
+                    fontWeight: FontWeight.w600,
+                  ),
+                ),
+              ),
+            ),
+
             // Date picker card
             Row(
               mainAxisAlignment: MainAxisAlignment.spaceEvenly,
@@ -328,22 +356,28 @@ class _JournalEntryPageState extends State<JournalEntryPage> {
     );
   }
 
-  void _saveEntry() async { // Make this function async
+  void _saveEntry() async {
   final dbProvider = Provider.of<DBProvider>(context, listen: false);
-  final imagePathsSnapshot = List.from(_chosenPhotos);
-  
-  // If there's nothing to save, don't do anything.
-  if (_textController.text.isEmpty && imagePathsSnapshot.isEmpty) {
+
+  // 1. Use your state list directly. This is the list you populated in _getImageFromGallery.
+  //    Make sure its name is clear, like _chosenPhotosWithMetadata.
+  final List<ImageWithMetadata> chosenPhotosWithMetadata = await Future.wait(
+    _chosenPhotos.map((file) async {
+      final metadata = await extractCorePhotoMetadata(file);
+      return ImageWithMetadata(file: file, metadata: metadata);
+    }),
+  );
+  final List<ImageWithMetadata> imagesToSave = List.from(chosenPhotosWithMetadata);
+
+  if (_textController.text.isEmpty && imagesToSave.isEmpty) {
     ScaffoldMessenger.of(context).showSnackBar(
       const SnackBar(content: Text('Cannot save an empty entry.')),
     );
     return;
   }
 
-  // Use a ValueNotifier to update the dialog text cleanly.
   final progressNotifier = ValueNotifier<String>('Starting upload...');
 
-  // Show the dialog
   showDialog(
     context: context,
     barrierDismissible: false,
@@ -365,6 +399,9 @@ class _JournalEntryPageState extends State<JournalEntryPage> {
 
   // --- Main Logic with try/catch ---
   try {
+    // 2. REMOVED the incorrect Future.wait block.
+    //    We already have the data we need in 'imagesToSave'.
+
     final newEntryId = await dbProvider.saveEntryToFirestore(
       currentUser: _currentUser!,
       chapterId: _selectedChapterId,
@@ -372,8 +409,13 @@ class _JournalEntryPageState extends State<JournalEntryPage> {
       textController: _textController,
       locationTextController: _locationTextController,
       selectedDate: _selectedDate,
-      imagePaths: imagePathsSnapshot.cast<XFile>(),
+      // 3. Pass the correct list directly to the provider.
+      imagesWithMetadata: imagesToSave,
       onProgress: (uploadedCount, totalCount) {
+        if (totalCount == 0) {
+            progressNotifier.value = 'Saving entry...';
+            return;
+        }
         if (uploadedCount < totalCount) {
           progressNotifier.value = '$uploadedCount/$totalCount photos uploaded';
         } else {
@@ -385,8 +427,7 @@ class _JournalEntryPageState extends State<JournalEntryPage> {
     // SUCCESS CASE
     if (!mounted) return;
     Navigator.of(context).pop(); // Close the loading dialog
-    
-    // Navigate to the new entry page
+
     Navigator.pushReplacement(
       context,
       MaterialPageRoute(
@@ -394,22 +435,22 @@ class _JournalEntryPageState extends State<JournalEntryPage> {
       ),
     );
 
-  } catch (e) {
+  } catch (e, stackTrace) { // It's good practice to catch the stack trace too
     // FAILURE CASE
     if (!mounted) return;
     Navigator.of(context).pop(); // IMPORTANT: Close the dialog on error!
 
-    // Show an error message
+    print('Error saving entry: $e'); // Log the full error for debugging
+    print(stackTrace);
+
     ScaffoldMessenger.of(context).showSnackBar(
       SnackBar(
-        content: Text('Failed to save entry: $e'),
+        content: Text('Failed to save entry. Please try again.'),
         backgroundColor: Colors.red,
       ),
     );
   }
-}
-
-}
+  }}
 
 // Placeholder AuthErrorPage
 class AuthErrorPage extends StatelessWidget {

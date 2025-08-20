@@ -137,9 +137,9 @@ class ChapterDetailPage extends StatelessWidget {
                   // For brevity, show just date + first few characters of the text.
                   final String formattedDate =
                       DateFormat.yMMMd().format(entry.date);
-                  final String snippet = entry.entry.length > 80
-                      ? '${entry.entry.substring(0, 80)}…'
-                      : entry.entry;
+                  final String snippet = (entry.entry ?? '').length > 80
+                      ? '${(entry.entry ?? '').substring(0, 80)}…'
+                      : (entry.entry ?? '');
 
                   return Card(
                     elevation: 2,
@@ -173,13 +173,13 @@ class ChapterDetailPage extends StatelessWidget {
                                       .bodyLarge
                                       ?.copyWith(fontWeight: FontWeight.w600),
                                 ),
-                                if (entry.location.isNotEmpty) ...[
+                                if (entry.location != null) ...[
                                   Row(
                                     children: [
                                       const Icon(Icons.location_on, size: 16),
                                       const SizedBox(width: 4),
                                       Text(
-                                        entry.location,
+                                        entry.location ?? '',
                                         style:
                                             Theme.of(context).textTheme.bodySmall,
                                       ),

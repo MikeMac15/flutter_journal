@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:journal/providers/db_provider.dart';
 
 import 'package:journal/providers/user_provider.dart';
 import 'package:journal/providers/theme_provider.dart';
@@ -14,6 +15,7 @@ class SettingsPage extends StatelessWidget {
     final theme = Theme.of(context);
     final userProv = context.watch<UserProvider>();
     final themeProv = context.watch<ThemeProvider>();
+    final dbProv = context.watch<DBProvider>();
 
     return Scaffold(
       // Make the Scaffold transparent so the gradient shows through
@@ -114,6 +116,15 @@ class SettingsPage extends StatelessWidget {
 
                 const ThemeCustomizerSection(),
 
+                const Divider(height: 32),
+                Center(
+                  child: OutlinedButton(
+                    onPressed: () {
+                      dbProv.triggerRefresh();
+                    },
+                    child: const Text('Refresh Data'),
+                  ),
+                ),
                 const Divider(height: 32),
 
                 // Sign Out Button

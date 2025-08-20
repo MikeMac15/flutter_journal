@@ -97,7 +97,7 @@ class JournalRecentsListState extends State<JournalRecentsList> {
       case JournalView.verticalPager:
         return JournalVerticalPager(entries: entries);
       case JournalView.calendar:
-        return CalendarCard();
+        return Expanded(child: CalendarCard(),);
       case JournalView.classic:
         // Placeholder for the "Classic" view. You can replace this with your desired widget.
         return ListView.builder(
@@ -110,7 +110,7 @@ class JournalRecentsListState extends State<JournalRecentsList> {
               child: ListTile(
                 title: Text(entry.date.toString()),
                 subtitle: Text(
-                  entry.entry,
+                  entry.entry ?? '',
                   maxLines: 2,
                   overflow: TextOverflow.ellipsis,
                 ),

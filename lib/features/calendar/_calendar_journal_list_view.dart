@@ -144,7 +144,7 @@ class CalendarJournalListView extends StatelessWidget {
                                     const SizedBox(width: 4),
                                     Expanded(
                                       child: Text(
-                                        entry.location,
+                                        entry.location ?? '',
                                         style: Theme.of(context)
                                             .textTheme
                                             .bodySmall,
@@ -157,9 +157,9 @@ class CalendarJournalListView extends StatelessWidget {
                                 const SizedBox(height: 6),
                                 // Entry snippet
                                 Text(
-                                  entry.entry.length > 80
-                                      ? '${entry.entry.substring(0, 80)}…'
-                                      : entry.entry,
+                                  (entry.entry ?? '').length > 80
+                                      ? '${(entry.entry ?? '').substring(0, 80)}…'
+                                      : (entry.entry ?? ''),
                                   style: Theme.of(context).textTheme.bodyMedium,
                                   maxLines: 3,
                                   overflow: TextOverflow.ellipsis,

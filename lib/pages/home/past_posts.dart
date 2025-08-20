@@ -42,14 +42,12 @@ class _PastPostsState extends State<PastPosts> {
                 ),
           ),
         ),
-        
-        ConstrainedBox(constraints: BoxConstraints(
-          maxHeight: 250,
-          minHeight: 200, 
-
-        ),
-        child: 
-        CarouselView.weighted(
+        ConstrainedBox(
+          constraints: BoxConstraints(
+            maxHeight: 250,
+            minHeight: 200,
+          ),
+          child: CarouselView.weighted(
             controller: controller,
             itemSnapping: true,
             flexWeights: const <int>[1, 7, 1],
@@ -61,9 +59,10 @@ class _PastPostsState extends State<PastPosts> {
                 ),
               ),
             ),
-            children: widget.journalEntries.map((JournalEntry entry) {
-              return HeroLayoutCard(entry: entry);
-            }).toList(),
+            children: widget.journalEntries
+                .map((entry) =>
+                    HeroLayoutCard(key: ValueKey(entry.id), entry: entry))
+                .toList(),
           ),
         ),
         const SizedBox(height: 20),
@@ -72,30 +71,68 @@ class _PastPostsState extends State<PastPosts> {
   }
 }
 
-class HeroLayoutCard extends StatelessWidget {
-  const HeroLayoutCard({super.key, required this.entry});
-
-  final JournalEntry entry;
+class _EntryImage extends StatelessWidget {
+  const _EntryImage({this.url});
+  final String? url;
 
   @override
   Widget build(BuildContext context) {
+    if (url == null || url!.isEmpty) {
+      return Image.asset(
+        'assets/images/noPhotoPlaceholder.png',
+        fit: BoxFit.cover,
+        color: Colors.black54,
+        colorBlendMode: BlendMode.darken,
+      );
+    }
+
+    return Image.network(
+      url!,
+      fit: BoxFit.cover,
+      gaplessPlayback: true, // keep old frame when rebuilt
+      // Downscale for memory/caching efficiency (approx target size)
+      // On mobile/desktop only; on web this is ignored.
+      // cacheWidth: (MediaQuery.sizeOf(context).width * 0.875).toInt(),
+      // cacheHeight: 250,
+      loadingBuilder: (ctx, child, progress) {
+        if (progress == null) return child; // first frame ready
+        return Image.asset(
+          'assets/images/noPhotoPlaceholder.png',
+          fit: BoxFit.cover,
+        );
+      },
+    );
+  }
+}
+
+class HeroLayoutCard extends StatefulWidget {
+  const HeroLayoutCard({super.key, required this.entry});
+  final JournalEntry entry;
+
+  @override
+  State<HeroLayoutCard> createState() => _HeroLayoutCardState();
+}
+
+class _HeroLayoutCardState extends State<HeroLayoutCard>
+    with AutomaticKeepAliveClientMixin {
+  @override
+  bool get wantKeepAlive => true;
+
+  @override
+  Widget build(BuildContext context) {
+    super.build(context); // <- IMPORTANT
+    final entry = widget.entry;
     final double width = MediaQuery.sizeOf(context).width;
+
     return Stack(
       alignment: AlignmentDirectional.bottomStart,
-      children: <Widget>[
+      children: [
         ClipRect(
-          child: OverflowBox(
-            maxWidth: width * 7 / 8,
-            minWidth: width * 7 / 8,
-            // maxHeight: double.infinity,
-            // minHeight: 500,
-            child:  Image(
-                height: double.infinity,
-                width: double.infinity,
-                fit: BoxFit.cover,
-                image: NetworkImage(entry.imgUrls.first),
-              ),
-            
+          child: SizedBox(
+            width: width * 7 / 8,
+            height: 250, // give it a real height to avoid relayout churn
+            child: _EntryImage(
+                url: entry.imgUrls.isNotEmpty ? entry.imgUrls.first : null),
           ),
         ),
         Padding(
@@ -115,20 +152,17 @@ class HeroLayoutCard extends StatelessWidget {
               ),
               const Gap(10),
               Text(
-                entry.location,
+                entry.location ?? '',
                 overflow: TextOverflow.clip,
                 softWrap: false,
-                style: Theme.of(context)
-                    .textTheme
-                    .labelLarge
-                    ?.copyWith(
+                style: Theme.of(context).textTheme.labelLarge?.copyWith(
                       fontWeight: FontWeight.bold,
                       color: Colors.white,
                     ),
               ),
               const Gap(10),
               Text(
-                entry.entry,
+                entry.entry ?? '',
                 overflow: TextOverflow.ellipsis,
                 softWrap: true,
                 style: Theme.of(context)

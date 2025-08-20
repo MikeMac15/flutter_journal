@@ -53,7 +53,7 @@ class MemoryEntriesList extends StatelessWidget {
       children.add(
         ListTile(
           title: Text(
-            entry.entry,
+            entry.entry ?? '',
             maxLines: 2,
             overflow: TextOverflow.ellipsis,
           ),
