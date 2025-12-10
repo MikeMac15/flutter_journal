@@ -269,8 +269,9 @@ class SectionCard extends StatelessWidget {
           : CrossFadeState.showFirst,
     );
 
-    if (expandChild)
+    if (expandChild) {
       body = Expanded(child: body); // <— Only place Expanded HERE
+    }
 
     return Material(
       elevation: 1.5,

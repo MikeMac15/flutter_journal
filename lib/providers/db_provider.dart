@@ -119,11 +119,12 @@ class Chapter {
   }
 
   static List<String> _asStringList(dynamic v) {
-    if (v is List)
+    if (v is List) {
       return v
           .map((e) => e?.toString() ?? '')
           .where((e) => e.isNotEmpty)
           .toList(growable: false);
+    }
     return const [];
   }
 
@@ -724,7 +725,7 @@ class DBProvider extends ChangeNotifier {
     // 3) Read back to get resolved server timestamps
     final snap = await docRef.get();
     final chapter =
-        Chapter.fromFirestore(snap as DocumentSnapshot<Map<String, dynamic>>);
+        Chapter.fromFirestore(snap);
 
     // 4) Update local cache with authoritative values
     _chapters[chapter.id] = chapter;
@@ -800,7 +801,7 @@ class DBProvider extends ChangeNotifier {
     // Read back to get resolved timestamps and normalized data
     final snap = await docRef.get();
     final chapter =
-        Chapter.fromFirestore(snap as DocumentSnapshot<Map<String, dynamic>>);
+        Chapter.fromFirestore(snap);
 
     // Update local cache
     _chapters[chapter.id] = chapter;

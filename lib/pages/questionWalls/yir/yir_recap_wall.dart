@@ -18,7 +18,7 @@ class YirRecapWall extends StatefulWidget {
 }
 
 class _YirRecapWallState extends State<YirRecapWall> {
-  bool _isEditing = false;
+  final bool _isEditing = false;
   bool _isAdding = false;
   final TextEditingController _textController = TextEditingController();
   int deleteCount = 0;

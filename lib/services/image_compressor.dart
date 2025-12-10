@@ -107,10 +107,10 @@ Future<Map<String, dynamic>> extractCorePhotoMetadata(XFile file) async {
   if (exifData.isEmpty) return result;
 
   // --- DATE TAKEN (prefer Original → Digitized → Image DateTime) ---
-  String? _firstNonNullString(List<String?> values) =>
+  String? firstNonNullString(List<String?> values) =>
       values.firstWhere((v) => v != null && v.trim().isNotEmpty, orElse: () => null);
 
-  final dateRaw = _firstNonNullString([
+  final dateRaw = firstNonNullString([
     exifData['EXIF DateTimeOriginal']?.toString(),
     exifData['EXIF DateTimeDigitized']?.toString(),
     exifData['Image DateTime']?.toString(),

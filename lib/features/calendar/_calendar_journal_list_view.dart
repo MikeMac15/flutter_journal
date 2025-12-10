@@ -3,7 +3,6 @@ import 'package:intl/intl.dart';
 import 'package:journal/features/_fade_route.dart';
 
 import 'package:journal/pages/journal_view_page.dart';
-import 'package:journal/pages/journal_entry_page.dart';
 import 'package:journal/providers/db_provider.dart';
 
 /// Horizontal list widget showing journal entries for a selected date across years,
