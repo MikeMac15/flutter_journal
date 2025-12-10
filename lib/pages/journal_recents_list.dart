@@ -1,183 +1,157 @@
-// import 'package:flutter/material.dart';
-// import 'package:firebase_auth/firebase_auth.dart';
-// import 'package:journal/features/cards/_recent_post_card.dart';
-// import 'package:journal/providers/db_provider.dart';
-// import 'package:provider/provider.dart';
-
-// class JournalRecentsList extends StatefulWidget {
-//   const JournalRecentsList({Key? key}) : super(key: key);
-
-//   @override
-//   JournalRecentsListState createState() => JournalRecentsListState();
-// }
-
-// class JournalRecentsListState extends State<JournalRecentsList> {
-//   final String? userId = FirebaseAuth.instance.currentUser?.uid;
-//   List<Map<String, dynamic>> _journalEntries = [];
-
-//   @override
-//   void initState() {
-//     super.initState();
-//     _loadJournalEntries();
-//   }
-
-//   Future<void> _loadJournalEntries() async {
-//     try {
-//       final entries =
-//           Provider.of<DBProvider>(context, listen: false).journalEntries;
-//       setState(() => _journalEntries = entries.values.toList());
-//     } catch (e) {
-//       // handle error...
-//     }
-//   }
-
-//   @override
-//   Widget build(BuildContext context) {
-//     final screenWidth = MediaQuery.of(context).size.width;
-//     const baseWidth = 375.0;
-//     final scale = (screenWidth / baseWidth).clamp(0.8, 1.4);
-//     final horizontalPadding = 16.0 * scale;
-//     final verticalPadding = 12.0 * scale;
-//     final crossAxisCount = screenWidth > 600 ? 2 : 1;
-
-//     return Scaffold(
-//       appBar: AppBar(
-//         title: Text(
-//           'Recent Journal Entries',
-//           style: TextStyle(fontSize: 20.0 * scale),
-//         ),
-//       ),
-//       body: Padding(
-//         padding: EdgeInsets.symmetric(
-//           horizontal: horizontalPadding,
-//           vertical: verticalPadding,
-//         ),
-//         child: _journalEntries.isEmpty
-//             ? Center(
-//                 child: Text(
-//                   'No recent entries found.',
-//                   style: TextStyle(fontSize: 16.0 * scale),
-//                 ),
-//               )
-//             : GridView.builder(
-//                 gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
-//                   crossAxisCount: crossAxisCount,
-//                   crossAxisSpacing: 16 * scale,
-//                   mainAxisSpacing: 16 * scale,
-//                   childAspectRatio: 0.85,
-//                 ),
-//                 itemCount: _journalEntries.length,
-//                 itemBuilder: (context, index) {
-//                   final entry = _journalEntries[index];
-//                   return JournalPostCard(
-//                     entry: entry,
-//                     scale: scale,
-//                     onViewFull: () {
-//                       // TODO: navigate to detail page, passing `entry`
-//                     },
-//                   );
-//                 },
-//               ),
-//       ),
-//     );
-//   }
-// }
-
-
-
-
-// lib/pages/journal_recents_list.dart
-
 import 'package:flutter/material.dart';
-import 'package:firebase_auth/firebase_auth.dart';
+import 'package:journal/features/calendar/_calendar_card.dart';
 import 'package:journal/features/cards/_journal_vertical_card_pager.dart';
-import 'package:vertical_card_pager/vertical_card_pager.dart';
-import 'package:cloud_firestore/cloud_firestore.dart';
-import 'package:intl/intl.dart';
-import 'package:journal/features/cards/_recent_post_card.dart';
+import 'package:journal/features/grid/_recents_grid_view.dart';
 import 'package:journal/providers/db_provider.dart';
 import 'package:provider/provider.dart';
 
+// Enum to manage the different view types
+enum JournalView { classic, verticalPager, grid, calendar }
+
 class JournalRecentsList extends StatefulWidget {
-  const JournalRecentsList({Key? key}) : super(key: key);
+  const JournalRecentsList({super.key});
 
   @override
   JournalRecentsListState createState() => JournalRecentsListState();
 }
 
 class JournalRecentsListState extends State<JournalRecentsList> {
-  final String? userId = FirebaseAuth.instance.currentUser?.uid;
-  List<Map<String, dynamic>> _journalEntries = [];
+  // State is now managed by the enum, defaulting to classic view
+  JournalView _selectedView = JournalView.verticalPager;
 
-  @override
-  void initState() {
-    super.initState();
-    _loadJournalEntries();
+  Widget _buildViewSwitcher() {
+    return DropdownButton<JournalView>(
+      value: _selectedView,
+      menuWidth: 140,
+      icon: const Icon(Icons.more_vert), // Changed icon for a more common look
+      underline: Container(), // Hides the default underline
+      onChanged: (JournalView? newValue) {
+        if (newValue != null) {
+          setState(() {
+            _selectedView = newValue;
+          });
+        }
+      },
+      // This builder is used for the selected item display (when dropdown is closed)
+      selectedItemBuilder: (BuildContext context) {
+        return JournalView.values.map<Widget>((JournalView item) {
+          // Return just the icon for the selected item
+          return _selectedView == JournalView.classic
+              ? const Icon(Icons.view_list)
+              : _selectedView == JournalView.verticalPager
+                  ? const Icon(Icons.view_carousel)
+                  : _selectedView == JournalView.calendar
+                      ? const Icon(Icons.calendar_today)
+                      : _selectedView == JournalView.grid
+                          ? const Icon(Icons.grid_view)
+                          : const Icon(Icons.view_list);
+        }).toList();
+      },
+      // This builder is used for the dropdown items (when dropdown is open)
+      items: const [
+        DropdownMenuItem(
+          value: JournalView.classic,
+          child: Row(children: [
+            Icon(Icons.view_list),
+            SizedBox(width: 8),
+            // FIX: Wrap Text with Flexible to prevent overflow
+            Flexible(child: Text('Classic'))
+          ]),
+        ),
+        DropdownMenuItem(
+          value: JournalView.verticalPager,
+          child: Row(children: [
+            Icon(Icons.view_carousel),
+            SizedBox(width: 8),
+            // FIX: Wrap Text with Flexible to prevent overflow
+            Flexible(child: Text('Pager'))
+          ]),
+        ),
+        DropdownMenuItem(
+          value: JournalView.grid,
+          child: Row(children: [
+            Icon(Icons.grid_view),
+            SizedBox(width: 8),
+            // FIX: Wrap Text with Flexible to prevent overflow
+            Flexible(child: Text('Grid')),
+          ]),
+        ),
+        DropdownMenuItem(
+          value: JournalView.calendar,
+          child: Row(children: [
+            Icon(Icons.calendar_today),
+            SizedBox(width: 8),
+            // FIX: Wrap Text with Flexible to prevent overflow
+            Flexible(child: Text('Calendar'))
+          ]),
+        ),
+      ],
+    );
   }
 
-  Future<void> _loadJournalEntries() async {
-    try {
-      final entries =
-          Provider.of<DBProvider>(context, listen: false).journalEntries;
-      setState(() => _journalEntries = entries.values.toList());
-    } catch (e) {
-      // handle error...
+  // Helper method to build the currently selected view
+  Widget _buildSelectedView(List<JournalEntry> entries, double scale) {
+    switch (_selectedView) {
+      case JournalView.grid:
+        return RecentsGridView(entries: entries, scale: scale);
+      case JournalView.verticalPager:
+        return JournalVerticalPager(entries: entries);
+      case JournalView.calendar:
+        return Expanded(child: CalendarCard(),);
+      case JournalView.classic:
+        // Placeholder for the "Classic" view. You can replace this with your desired widget.
+        return ListView.builder(
+          itemCount: entries.length,
+          itemBuilder: (context, index) {
+            // Assuming JournalEntry has a 'title' and 'content' property for this example
+            final entry = entries[index];
+            return Card(
+              margin: const EdgeInsets.symmetric(vertical: 8.0),
+              child: ListTile(
+                title: Text(entry.date.toString()),
+                subtitle: Text(
+                  entry.entry ?? '',
+                  maxLines: 2,
+                  overflow: TextOverflow.ellipsis,
+                ),
+              ),
+            );
+          },
+        );
     }
   }
 
   @override
   Widget build(BuildContext context) {
+    // This widget will listen for changes in DBProvider and rebuild automatically.
+    final dbProvider = Provider.of<DBProvider>(context);
+    final journalEntries = dbProvider.journalEntriesSorted;
+
+    // Styling based on screen width
     final screenWidth = MediaQuery.of(context).size.width;
     const baseWidth = 375.0;
     final scale = (screenWidth / baseWidth).clamp(0.8, 1.4);
     final horizontalPadding = 16.0 * scale;
-    final verticalPadding = 12.0 * scale;
-
-    // Prepare titles (dates) and cards
-    final titles = _journalEntries.map((entry) {
-      final DateTime date = (entry['date'] is DateTime)
-          ? entry['date']
-          : (entry['date'] as Timestamp).toDate();
-      return DateFormat.yMMMd().format(date);
-    }).toList();
-
-    final cards = _journalEntries.map((entry) {
-      return Padding(
-        padding: EdgeInsets.symmetric(
-          vertical: 12 * scale,
-          horizontal: horizontalPadding,
-        ),
-        child: JournalPostCard(
-          entry: entry,
-          scale: scale,
-          onViewFull: () {
-            // TODO: navigate to detail page, passing `entry`
-          },
-        ),
-      );
-    }).toList();
 
     return Scaffold(
-      appBar: AppBar(
-        title: Text(
-          'Recent Journal Entries',
-          style: TextStyle(fontSize: 20.0 * scale),
+      floatingActionButton: _buildViewSwitcher(),
+      body:  Column(
+          children: [
+            // Now Expanded is a direct child of Column, which is correct
+            Expanded(
+              child: journalEntries.isEmpty
+                  ? Center(
+                      child: Text(
+                        'No recent entries found.',
+                        style: TextStyle(fontSize: 16.0 * scale),
+                      ),
+                    )
+                  // Use the helper method to build the view
+                  : _buildSelectedView(journalEntries, scale),
+            ),
+          ],
         ),
-      ),
-      body: Padding(
-        padding: EdgeInsets.symmetric(
-          horizontal: horizontalPadding,
-          vertical: verticalPadding,
-        ),
-        child: _journalEntries.isEmpty
-            ? Center(
-                child: Text(
-                  'No recent entries found.',
-                  style: TextStyle(fontSize: 16.0 * scale),
-                ),
-              )
-            : JournalVerticalPager()
-      ),
+     
     );
   }
 }

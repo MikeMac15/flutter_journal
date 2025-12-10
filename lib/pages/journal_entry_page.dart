@@ -1,14 +1,20 @@
 import 'package:flutter/material.dart';
 import 'package:firebase_auth/firebase_auth.dart';
+import 'package:flutter_image_compress/flutter_image_compress.dart';
+import 'package:intl/intl.dart';
+import 'package:journal/features/menu_buttons/raised_button.dart';
 
 // import 'package:journal/pages/errors/auth_error_page.dart';
 import 'package:journal/pages/journal_entry/activity_log.dart';
 import 'package:journal/pages/journal_entry/activity_list.dart';
 import 'package:journal/pages/journal_entry/chapter_selector.dart';
 import 'package:journal/pages/journal_entry/entry_date_picker.dart';
-import 'package:journal/pages/journal_entry/text_entry.dart';
+import 'package:journal/features/text/text_entry.dart';
 import 'package:journal/features/pictures/view_chosen_images.dart';
+import 'package:journal/pages/journal_view_page.dart';
+import 'package:journal/pages/photo_entry/photo_entry.dart';
 import 'package:journal/providers/db_provider.dart';
+import 'package:journal/services/image_compressor.dart';
 import 'package:provider/provider.dart';
 
 import '../features/pictures/_my_image_picker.dart';
@@ -31,7 +37,8 @@ class _JournalEntryPageState extends State<JournalEntryPage> {
   late DateTime _selectedDate;
   late bool _activities;
   late MyImagePicker _myImagePicker;
-  final List<String> _chosenPhotoPaths = [];
+  final List<XFile> _chosenPhotos = [];
+
 
   String? _selectedChapterId;
   // String? _selectedChapterName;
@@ -60,8 +67,9 @@ class _JournalEntryPageState extends State<JournalEntryPage> {
 
   void _setupAuthListener() {
     FirebaseAuth.instance.authStateChanges().listen((User? user) {
-      if (!mounted)
+      if (!mounted) {
         return; // Ensure widget is still in the tree before calling setState
+      }
 
       setState(() {
         _currentUser = user;
@@ -115,10 +123,11 @@ class _JournalEntryPageState extends State<JournalEntryPage> {
   }
 
   Future<void> _getImageFromGallery() async {
-    String? imagePath = await _myImagePicker.pickImageFromGallery();
-    if (imagePath != null) {
+    final List<XFile> files =
+        await _myImagePicker.pickMultipleImagesFromGallery();
+    for (final file in files) {
       setState(() {
-        _chosenPhotoPaths.add(imagePath);
+        _chosenPhotos.add(file);
       });
     }
   }
@@ -129,203 +138,319 @@ class _JournalEntryPageState extends State<JournalEntryPage> {
   //   });
   // }
 
-@override
-Widget build(BuildContext context) {
-  final theme = Theme.of(context);
-  final screenHeight = MediaQuery.of(context).size.height;
+  @override
+  Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    final screenHeight = MediaQuery.of(context).size.height;
 
-  return Scaffold(
-    backgroundColor: theme.colorScheme.background,
-    appBar: AppBar(
-      elevation: 2,
-      backgroundColor: theme.colorScheme.surface,
-      leading: IconButton(
-        icon: const Icon(Icons.close, color: Colors.redAccent),
-        onPressed: () => Navigator.pop(context),
-      ),
-      actions: [
-        TextButton(
-          onPressed: _saveEntry,
-          child: Text(
-            "Save",
-            style: theme.textTheme.labelLarge?.copyWith(
-              color: theme.colorScheme.primary,
-              fontSize: 16,
-              fontWeight: FontWeight.w600,
-            ),
-          ),
+    return Scaffold(
+
+      backgroundColor: Colors.transparent,
+      appBar: AppBar(
+        title: Text(DateFormat('E  MMM dd, yyyy').format(_selectedDate)),
+        elevation: 2,
+        backgroundColor: Colors.transparent,
+        leading: IconButton(
+          icon: const Icon(Icons.close, color: Colors.redAccent),
+          onPressed: () => Navigator.pop(context),
         ),
-      ],
-    ),
-    body: SingleChildScrollView(
-      padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 16),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.stretch,
-        children: [
-          // Date picker card
-          Card(
-            shape: RoundedRectangleBorder(
-              borderRadius: BorderRadius.circular(12),
-            ),
-            elevation: 3,
-            child: Padding(
-              padding: const EdgeInsets.all(12),
-              child: EntryDatePicker(
-                selectedDate: _selectedDate,
-                onDateChanged: _updateSelectedDate,
+        actions: [
+          TextButton(
+            onPressed: _saveEntry,
+            child: Text(
+              "Save",
+              style: theme.textTheme.labelLarge?.copyWith(
+                color: theme.colorScheme.primary,
+                fontSize: 16,
+                fontWeight: FontWeight.w600,
               ),
             ),
           ),
-          const SizedBox(height: 16),
+        ],
+      ),
+      body: SingleChildScrollView(
+        padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 16),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.stretch,
+          children: [
 
-          // Location input
-          Text(
-            "Location",
-            style: theme.textTheme.titleMedium?.copyWith(fontWeight: FontWeight.w600),
-          ),
-          const SizedBox(height: 8),
-          TextEntry(
-            isMultiLine: false,
-            controller: _locationTextController,
-            hintText: '(optional)',
-          ),
-          const SizedBox(height: 24),
-
-          // Chapter selector
-          Card(
-            shape: RoundedRectangleBorder(
-              borderRadius: BorderRadius.circular(12),
-            ),
-            elevation: 2,
-            child: ListTile(
-              leading: const Icon(Icons.menu_book),
-              title: const Text("Chapter"),
-              subtitle: Text(
-                _selectedChapterId != null
-                    ? (Provider.of<DBProvider>(context, listen: false)
-                            .getChapterById(_selectedChapterId!)?['name'] ??
-                        "Unknown")
-                    : "Select a chapter",
-              ),
-              trailing: const Icon(Icons.chevron_right),
-              onTap: () => showModalBottomSheet(
-                context: context,
-                builder: (_) => ChapterSelector(
-                  onChapterSelected: _handleChapterSelected,
+            //navigate to PhotoEntryPage button
+            Align(
+              alignment: Alignment.centerRight,
+              child: TextButton.icon(
+                onPressed: () {
+                  Navigator.push(
+                    context,
+                    MaterialPageRoute(
+                      builder: (context) => PhotoEntryPage(
+                      ),
+                    ),
+                  );
+                },
+                icon: const Icon(Icons.add_a_photo_outlined),
+                label: const Text("Add Photo Entry"),
+                style: TextButton.styleFrom(
+                  foregroundColor: theme.colorScheme.primary,
+                  textStyle: theme.textTheme.labelLarge?.copyWith(
+                    fontSize: 16,
+                    fontWeight: FontWeight.w600,
+                  ),
                 ),
               ),
             ),
-          ),
-          const SizedBox(height: 24),
 
-          // Journal entry
-          Text(
-            "Journal Entry",
-            style: theme.textTheme.titleMedium?.copyWith(fontWeight: FontWeight.w600),
-          ),
-          const SizedBox(height: 8),
-          Container(
-            height: screenHeight * 0.3,
-            decoration: BoxDecoration(
-              border: Border.all(color: theme.dividerColor),
-              borderRadius: BorderRadius.circular(8),
-            ),
-            child: TextEntry(
-              isMultiLine: true,
-              controller: _textController,
-              hintText: 'Write your thoughts here...',
-            ),
-          ),
-          const SizedBox(height: 24),
+            // Date picker card
+            Row(
+              mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+              children: [
+                // A calendar icon on the left
+                Row(
+                  children: [
+                    Icon(Icons.calendar_today, color: Colors.blue.shade700),
+                    const SizedBox(width: 12),
+                    Text(
+                      "Entry Date:",
+                      style: TextStyle(
+                        fontSize: 18,
+                        fontWeight: FontWeight.w600,
+                        color: Colors.blue.shade700,
+                      ),
+                    ),
+                  ],
+                ),
 
-          // Activities
-          if (_activities) ...[
-            Text(
-              "Activities",
-              style: theme.textTheme.titleMedium?.copyWith(fontWeight: FontWeight.w600),
-            ),
-            const SizedBox(height: 8),
-            ActivityList(
-              savedActivities: _activityControllers
-                  .map((c) => {
-                        'name': c['name']!.text,
-                        'description': c['description']!.text,
-                      })
-                  .toList(),
-              onDelete: _deleteActivity,
+                // Your actual EntryDatePicker on the right
+                EntryDatePicker(
+                  selectedDate: _selectedDate,
+                  onDateChanged: _updateSelectedDate,
+                ),
+              ],
             ),
             const SizedBox(height: 16),
-          ],
-          ActivityLog(
-            controllers: _activityControllers,
-            onSaveActivity: _saveActivity,
-            onActivitiesChanged: (_) {},
-          ),
-          const SizedBox(height: 24),
 
-          // Images preview
-          Text(
-  "Images",
-  style: theme.textTheme.titleMedium
-      ?.copyWith(fontWeight: FontWeight.w600),
-),
-const SizedBox(height: 8),
+            // Location input
 
-// Animate between zero and a max height
-AnimatedSize(
-  duration: const Duration(milliseconds: 300),
-  curve: Curves.easeInOut,
-  child: ConstrainedBox(
-    constraints: BoxConstraints(
-      // when there are no images, collapse to 0
-      minHeight: _chosenPhotoPaths.isEmpty ? 0 : 100,
-      maxHeight: _chosenPhotoPaths.isEmpty
-          ? 0
-          : MediaQuery.of(context).size.height * 0.25,
-    ),
-    child: _chosenPhotoPaths.isEmpty
-        // show nothing when empty
-        ? const SizedBox.shrink()
-        // otherwise your carousel
-        : ViewChosenImages(chosenPhotoPaths: _chosenPhotoPaths),
-  ),
-),
-const SizedBox(height: 16),
+            TextEntry(
+              isMultiLine: false,
+              controller: _locationTextController,
+              labelText: 'Location: (optional)',
+            ),
+            const SizedBox(height: 24),
 
-          // Add image button
-          ElevatedButton.icon(
-            onPressed: _getImageFromGallery,
-            icon: const Icon(Icons.add_a_photo),
-            label: const Text("Add Image"),
-            style: ElevatedButton.styleFrom(
-              padding: const EdgeInsets.symmetric(vertical: 14),
-              textStyle: theme.textTheme.labelLarge?.copyWith(fontSize: 16),
+            // Chapter selector
+            Card(
               shape: RoundedRectangleBorder(
-                borderRadius: BorderRadius.circular(8),
+                borderRadius: BorderRadius.circular(12),
+              ),
+              elevation: 2,
+              child: ListTile(
+                leading: const Icon(Icons.menu_book),
+                title: const Text("Chapter"),
+                subtitle: Text(
+                  _selectedChapterId != null
+                      ? (Provider.of<DBProvider>(context, listen: false)
+                              .getChapterById(_selectedChapterId!)?.name ??
+                          "Unknown")
+                      : "Select a chapter",
+                ),
+                trailing: const Icon(Icons.chevron_right),
+                onTap: () => showModalBottomSheet(
+                  context: context,
+                  builder: (_) => ChapterSelector(
+                    onChapterSelected: _handleChapterSelected,
+                  ),
+                ),
               ),
             ),
-          ),
-          const SizedBox(height: 24),
-        ],
+            const SizedBox(height: 24),
+
+            // Journal entry
+
+            SizedBox(
+              height: screenHeight * 0.3,
+              child: TextEntry(
+                isMultiLine: true,
+                controller: _textController,
+                labelText: 'Journal Entry:',
+              ),
+            ),
+            const SizedBox(height: 24),
+
+            // Activities
+            if (_activities) ...[
+              Text(
+                "Activities",
+                style: theme.textTheme.titleMedium
+                    ?.copyWith(fontWeight: FontWeight.w600),
+              ),
+              const SizedBox(height: 8),
+              ActivityList(
+                savedActivities: _activityControllers
+                    .map((c) => {
+                          'name': c['name']!.text,
+                          'description': c['description']!.text,
+                        })
+                    .toList(),
+                onDelete: _deleteActivity,
+              ),
+              const SizedBox(height: 16),
+            ],
+            ActivityLog(
+              controllers: _activityControllers,
+              onSaveActivity: _saveActivity,
+              onActivitiesChanged: (_) {},
+            ),
+            const SizedBox(height: 24),
+
+            // Images preview
+            Text(
+              "Images",
+              style: theme.textTheme.titleMedium
+                  ?.copyWith(fontWeight: FontWeight.w600),
+            ),
+            const SizedBox(height: 8),
+
+// Animate between zero and a max height
+            AnimatedSize(
+              duration: const Duration(milliseconds: 300),
+              curve: Curves.easeInOut,
+              child: ConstrainedBox(
+                constraints: BoxConstraints(
+                  // when there are no images, collapse to 0
+                  minHeight: _chosenPhotos.isEmpty ? 0 : 100,
+                  maxHeight: _chosenPhotos.isEmpty
+                      ? 0
+                      : MediaQuery.of(context).size.height * 0.25,
+                ),
+                child: _chosenPhotos.isEmpty
+                    // show nothing when empty
+                    ? const SizedBox.shrink()
+                    // otherwise your carousel
+                    : ViewChosenImages(chosenPhotos: _chosenPhotos),
+              ),
+            ),
+            const SizedBox(height: 16),
+
+            // Add image button
+            RaiseButton(
+                onPressed: _getImageFromGallery,
+                label: 'Add Image',
+                icon: Icons.add_a_photo),
+
+            // ElevatedButton.icon(
+            //   onPressed: _getImageFromGallery,
+            //   icon: const Icon(Icons.add_a_photo),
+            //   label: const Text("Add Image"),
+            //   style: ElevatedButton.styleFrom(
+            //     padding: const EdgeInsets.symmetric(vertical: 14),
+            //     textStyle: theme.textTheme.labelLarge?.copyWith(fontSize: 16),
+            //     shape: RoundedRectangleBorder(
+            //       borderRadius: BorderRadius.circular(8),
+            //     ),
+            //   ),
+            // ),
+            const SizedBox(height: 24),
+          ],
+        ),
       ),
+    );
+  }
+
+  void _saveEntry() async {
+  final dbProvider = Provider.of<DBProvider>(context, listen: false);
+
+  // 1. Use your state list directly. This is the list you populated in _getImageFromGallery.
+  //    Make sure its name is clear, like _chosenPhotosWithMetadata.
+  final List<ImageWithMetadata> chosenPhotosWithMetadata = await Future.wait(
+    _chosenPhotos.map((file) async {
+      final metadata = await extractCorePhotoMetadata(file);
+      return ImageWithMetadata(file: file, metadata: metadata);
+    }),
+  );
+  final List<ImageWithMetadata> imagesToSave = List.from(chosenPhotosWithMetadata);
+
+  if (_textController.text.isEmpty && imagesToSave.isEmpty) {
+    ScaffoldMessenger.of(context).showSnackBar(
+      const SnackBar(content: Text('Cannot save an empty entry.')),
+    );
+    return;
+  }
+
+  final progressNotifier = ValueNotifier<String>('Starting upload...');
+
+  showDialog(
+    context: context,
+    barrierDismissible: false,
+    builder: (dialogContext) => ValueListenableBuilder<String>(
+      valueListenable: progressNotifier,
+      builder: (context, progressText, child) {
+        return AlertDialog(
+          content: Row(
+            children: [
+              const CircularProgressIndicator(),
+              const SizedBox(width: 16),
+              Flexible(child: Text(progressText)),
+            ],
+          ),
+        );
+      },
     ),
   );
-}
 
-void _saveEntry() {
-  Provider.of<DBProvider>(context, listen: false).saveEntryToFirestore(
-    context: context,
-    currentUser: _currentUser,
-    chapterId: _selectedChapterId,
-    activityControllers: _activityControllers,
-    textController: _textController,
-    locationTextController: _locationTextController,
-    selectedDate: _selectedDate,
-    imagePaths: _chosenPhotoPaths,
-  );
-}
+  // --- Main Logic with try/catch ---
+  try {
+    // 2. REMOVED the incorrect Future.wait block.
+    //    We already have the data we need in 'imagesToSave'.
 
-}
+    final newEntryId = await dbProvider.saveEntryToFirestore(
+      currentUser: _currentUser!,
+      chapterId: _selectedChapterId,
+      activityControllers: _activityControllers,
+      textController: _textController,
+      locationTextController: _locationTextController,
+      selectedDate: _selectedDate,
+      // 3. Pass the correct list directly to the provider.
+      imagesWithMetadata: imagesToSave,
+      onProgress: (uploadedCount, totalCount) {
+        if (totalCount == 0) {
+            progressNotifier.value = 'Saving entry...';
+            return;
+        }
+        if (uploadedCount < totalCount) {
+          progressNotifier.value = '$uploadedCount/$totalCount photos uploaded';
+        } else {
+          progressNotifier.value = 'All photos uploaded. Saving entry...';
+        }
+      },
+    );
+
+    // SUCCESS CASE
+    if (!mounted) return;
+    Navigator.of(context).pop(); // Close the loading dialog
+
+    Navigator.pushReplacement(
+      context,
+      MaterialPageRoute(
+        builder: (_) => JournalEntryViewPage(entryId: newEntryId),
+      ),
+    );
+
+  } catch (e, stackTrace) { // It's good practice to catch the stack trace too
+    // FAILURE CASE
+    if (!mounted) return;
+    Navigator.of(context).pop(); // IMPORTANT: Close the dialog on error!
+
+    print('Error saving entry: $e'); // Log the full error for debugging
+    print(stackTrace);
+
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(
+        content: Text('Failed to save entry. Please try again.'),
+        backgroundColor: Colors.red,
+      ),
+    );
+  }
+  }}
 
 // Placeholder AuthErrorPage
 class AuthErrorPage extends StatelessWidget {

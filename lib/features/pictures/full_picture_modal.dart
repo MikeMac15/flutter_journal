@@ -6,7 +6,7 @@ import 'package:image_picker/image_picker.dart';
 class FullscreenImageView extends StatelessWidget {
   final XFile imageFile;
 
-  const FullscreenImageView({Key? key, required this.imageFile}) : super(key: key);
+  const FullscreenImageView({super.key, required this.imageFile});
 
   @override
   Widget build(BuildContext context) {

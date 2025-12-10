@@ -2,13 +2,12 @@ import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:flutter/foundation.dart';
 import 'package:image_picker/image_picker.dart';
+import 'package:journal/features/_fade_route.dart';
 import 'package:journal/features/pictures/full_picture_modal.dart';
 
-
 class ViewChosenImages extends StatefulWidget {
-  final List<String> chosenPhotoPaths;
-
-  const ViewChosenImages({super.key, required this.chosenPhotoPaths});
+  final List<Object> chosenPhotos; // can be XFile or String
+  const ViewChosenImages({super.key, required this.chosenPhotos});
 
   @override
   State<ViewChosenImages> createState() => _ViewChosenImagesState();
@@ -24,6 +23,7 @@ class _ViewChosenImagesState extends State<ViewChosenImages> {
   }
 
   Widget _buildImage(XFile xfile) {
+
     if (kIsWeb) {
       return FutureBuilder<Uint8List>(
         future: xfile.readAsBytes(),
@@ -45,14 +45,24 @@ class _ViewChosenImagesState extends State<ViewChosenImages> {
         fit: BoxFit.cover,
         height: 400,
         width: double.infinity,
-      
       );
     }
   }
 
   @override
   Widget build(BuildContext context) {
-    double height = MediaQuery.of(context).size.height;
+
+    final List<XFile> xFiles = widget.chosenPhotos.map((item) {
+      if (item is XFile) return item;
+      if (item is String) return XFile(item);
+      throw Exception('Invalid photo type: $item');
+    }).toList();
+
+    final double height = MediaQuery.of(context).size.height;
+
+    // If you want equal “flex weight” for every image, do this:
+    final List<int> equalWeights =
+        List<int>.filled(xFiles.length, 1);
 
     return ConstrainedBox(
       constraints: BoxConstraints(maxHeight: height / 2),
@@ -60,34 +70,45 @@ class _ViewChosenImagesState extends State<ViewChosenImages> {
         controller: controller,
         scrollDirection: Axis.horizontal,
         itemSnapping: true,
-        flexWeights: const <int>[3, 7, 3],
+
+        // Either omit flexWeights entirely, OR use equalWeights:
+        // flexWeights: equalWeights,
+
+        // (If you comment out flexWeights, the default is “1 per child.”)
+        flexWeights: equalWeights,
+
         onTap: (int index) {
-          Navigator.push(
-            context,
-            MaterialPageRoute(
-              builder: (context) => FullscreenImageView(
-          imageFile: XFile(widget.chosenPhotoPaths[index]),
+          Navigator.of(context).push(
+            fadeRoute(
+              FullscreenImageView(
+                imageFile: xFiles[index],
               ),
+              duration: const Duration(milliseconds: 600),
             ),
           );
         },
-        children: List<Widget>.generate(widget.chosenPhotoPaths.length, (int index) {
-          return Center(
-            child: Container(
-              decoration: BoxDecoration(
-                borderRadius: BorderRadius.all(Radius.circular(12)),
-                boxShadow: [
-                  BoxShadow(
-                    color: Colors.black.withAlpha((0.2 * 255).toInt()),
-                    spreadRadius: 2,
-                    blurRadius: 4,
-                  ),
-                ],
+        children: List<Widget>.generate(
+          xFiles.length,
+          (int index) {
+            return Center(
+              child: Container(
+                decoration: BoxDecoration(
+                  borderRadius: const BorderRadius.all(Radius.circular(12)),
+                  boxShadow: [
+                    BoxShadow(
+                      color: Colors.black.withAlpha((0.2 * 255).toInt()),
+                      spreadRadius: 2,
+                      blurRadius: 4,
+                    ),
+                  ],
+                ),
+                child: _buildImage(
+                  xFiles[index],
+                ),
               ),
-              child: _buildImage(XFile(widget.chosenPhotoPaths[index])),
-            ),
-          );
-        }),
+            );
+          },
+        ),
       ),
     );
   }

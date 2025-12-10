@@ -1,4 +1,7 @@
 import 'package:flutter/material.dart';
+import 'package:journal/features/_fade_route.dart';
+import 'package:journal/features/menu_buttons/raised_button.dart';
+import 'package:journal/pages/chapters/chapter_view_page.dart';
 import 'package:journal/pages/chapters/create_chapter_page.dart';
 import 'package:journal/providers/db_provider.dart';
 import 'package:provider/provider.dart';
@@ -21,7 +24,15 @@ class _ChaptersPageState extends State<ChaptersPage> {
   Future<List<Map<String, dynamic>>> _loadChapters() async {
     try {
       final chapters = Provider.of<DBProvider>(context, listen: false).chapters;
-      return chapters.values.toList();
+      return chapters.entries.map((entry) {
+        return {
+          'id': entry.value.id,
+          'name': entry.value.name,
+          'description': entry.value.description,
+          'image': entry.value.image,
+          'entryIDs': entry.value.entryIDs,
+        };
+      }).toList();
     } catch (e) {
       // print('Error fetching chapters: $e');
       return [];
@@ -30,10 +41,7 @@ class _ChaptersPageState extends State<ChaptersPage> {
 
   void navToCreateChapterPage() {
     // Navigate to the page where the user can create a new chapter
-    Navigator.push(
-      context,
-      MaterialPageRoute(builder: (context) => const CreateChapterPage()),
-    );
+    Navigator.of(context).push(fadeRoute(CreateChapterPage()));
   }
 
   @override
@@ -55,69 +63,64 @@ class _ChaptersPageState extends State<ChaptersPage> {
               return Center(child: Text('Error: ${snapshot.error}'));
             }
 
-            if (!snapshot.hasData || snapshot.data!.isEmpty) {
-              return const Center(child: Text('No chapters available'));
-            }
-
             final chapters = snapshot.data!;
 
             return Column(
               children: [
-                GestureDetector(
-                  onTap: navToCreateChapterPage, // Corrected this
-                  child: Container(
-                    padding: const EdgeInsets.symmetric(vertical: 10),
-                    color: Colors.blue,
-                    child: const Text(
-                      "Create new chapter",
-                      style: TextStyle(color: Colors.white, fontSize: 16),
-                    ),
-                  ),
-                ),
+                RaiseButton(onPressed: navToCreateChapterPage, label: 'Create New Chapter'),
                 const SizedBox(height: 20),
                 Expanded(
                   child: ListView.builder(
                     itemCount: chapters.length,
                     itemBuilder: (context, index) {
                       final chapter = chapters[index];
-                      return Card(
-                        margin: const EdgeInsets.only(bottom: 16),
-                        child: Padding(
-                          padding: const EdgeInsets.all(8.0),
-                          child: Column(
-                            crossAxisAlignment: CrossAxisAlignment.start,
-                            children: [
-                              Text(
-                                chapter['name'] ?? 'No Name',
-                                style: const TextStyle(
-                                  fontSize: 20,
-                                  fontWeight: FontWeight.bold,
-                                ),
-                              ),
-                              const SizedBox(height: 8),
-                              Text(
-                                chapter['description'] ?? 'No Description',
-                                style: const TextStyle(fontSize: 16),
-                              ),
-                              const SizedBox(height: 8),
-                              if (chapter['image'] != null && chapter['image'].isNotEmpty)
-                                Padding(
-                                  padding: const EdgeInsets.all(8.0),
-                                  child: ClipRRect(
-                                    borderRadius: BorderRadius.circular(15), // Rounded corners for image
-                                    child: Image.network(
-                                      chapter['image'] ?? '',
-                                      fit: BoxFit.cover,
-                                      width: double.infinity,
-                                      height: 300, // Set height for the image
-                                    ),
-                                  ),
-                                ),
-                              const SizedBox(height: 8),
-                            ],
-                          ),
-                        ),
-                      );
+                      return GestureDetector(
+  onTap: () {
+    Navigator.of(context).push(
+      fadeRoute(
+        ChapterDetailPage(chapterId: chapter['id']),
+        duration: const Duration(milliseconds: 500),
+      ),
+    );
+  },
+  child: Card(
+    margin: const EdgeInsets.only(bottom: 16),
+    child: Padding(
+      padding: const EdgeInsets.all(8.0),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Text(
+            chapter['name'] ?? 'No Name',
+            style: const TextStyle(
+              fontSize: 20,
+              fontWeight: FontWeight.bold,
+            ),
+          ),
+          const SizedBox(height: 8),
+          Text(
+            chapter['description'] ?? 'No Description',
+            style: const TextStyle(fontSize: 16),
+          ),
+          const SizedBox(height: 8),
+          if (chapter['image'] != null && (chapter['image'] as String).isNotEmpty)
+            Padding(
+              padding: const EdgeInsets.all(8.0),
+              child: ClipRRect(
+                borderRadius: BorderRadius.circular(15),
+                child: Image.network(
+                  chapter['image'] as String,
+                  fit: BoxFit.cover,
+                  width: double.infinity,
+                  height: 200,
+                ),
+              ),
+            ),
+        ],
+      ),
+    ),
+  ),
+);
                     },
                   ),
                 ),

@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
-import 'package:journal/pages/journal_entry/text_entry.dart';
+import 'package:journal/features/menu_buttons/raised_button.dart';
+import 'package:journal/features/text/text_entry.dart';
 
 class ActivityLog extends StatefulWidget {
   final List<Map<String, TextEditingController>> controllers;
@@ -62,8 +63,9 @@ class _ActivityLogState extends State<ActivityLog> {
   @override
 Widget build(BuildContext context) {
   return Center(
-    child: ElevatedButton(
-      child: const Text('Add New Activity'),
+    child: RaiseButton(
+      label: 'Activity',
+      icon: Icons.add,
       onPressed: () {
         showModalBottomSheet<void>(
           context: context,
@@ -90,7 +92,7 @@ Widget build(BuildContext context) {
                               child: TextEntry(
                                 isMultiLine: false,
                                 controller: _nameController,
-                                hintText: 'Activity Name',
+                                labelText: "Activity:",
                                 onChanged: (_) => _notifyParent(),
                               ),
                             ),
@@ -102,21 +104,17 @@ Widget build(BuildContext context) {
                           child: TextEntry(
                             isMultiLine: true,
                             controller: _descriptionController,
-                            hintText: "How'd it go?... (optional)",
+                            labelText: "Description: (optional)",
                             onChanged: (_) => _notifyParent(),
                           ),
                         ),
                   const SizedBox(height: 10),
-                  Row(
-                    mainAxisAlignment: MainAxisAlignment.spaceEvenly,
-                    children: [
-                      
-                      ElevatedButton(
-                        onPressed: _saveActivity,
-                        child: const Text('Save Activity'),
+                  Center(
+                        child: RaiseButton(
+                          onPressed: _saveActivity,
+                          label: 'Save Activity',
+                        ),
                       ),
-                    ],
-                  ),
                   const SizedBox(height: 20), // Extra padding at the bottom
                       ],
                     ),

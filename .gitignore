@@ -1,103 +1,46 @@
-# Miscellaneous
-*.class
-*.log
-*.pyc
-*.swp
-.DS_Store
-.atom/
-.build/
-.buildlog/
-.history
-.svn/
-.swiftpm/
-migrate_working_dir/
-
-# IntelliJ related
-*.iml
-*.ipr
-*.iws
-.idea/
-
-# The .vscode folder contains launch configuration and tasks you configure in
-# VS Code which you may wish to be included in version control, so this line
-# is commented out by default.
-#.vscode/
-
-# Flutter/Dart/Pub related
-**/doc/api/
-**/ios/Flutter/.last_build_id
+# Flutter / Dart
 .dart_tool/
+.buildlog/
+.build/
 .flutter-plugins
 .flutter-plugins-dependencies
+.flutter_web_plugins
+.melos_tool/
+.packages
 .pub-cache/
 .pub/
-/build/
-
-# Symbolication related
-app.*.symbols
-
-# Obfuscation related
-app.*.map.json
-
-# Android Studio will place build artifacts here
-/android/app/debug
-/android/app/profile
-/android/app/release
-
-
-# Flutter / Dart ################################################
-
-# Generated files
-.dart_tool/
-.packages
-.pub/
-.buildlog/
-.build/
+coverage/
 build/
-.flutter-plugins
-.flutter-plugins-dependencies
-.flutter-configuration-cache
-.flutter_web_plugins
 
-# Metadata
-*.lock
-metadata
-pubspec.lock
+# Firebase Hosting + emulator cache (generated)
+.firebase/
 
-# IDE settings
-.idea/
-.vscode/
-*.iml
+# Android
+android/.gradle/
+android/app/.cxx/
+android/app/*.jks
+android/app/key.properties
+android/app/build/
+android/build/
 
-# macOS
-macos/Flutter/ephemeral/
-
-# iOS
+# iOS / macOS (generated/ephemeral)
 ios/Pods/
 ios/.symlinks/
 ios/Flutter/Flutter.framework
 ios/Flutter/Flutter.podspec
 ios/Flutter/Generated.xcconfig
-ios/ServiceDefinitions.json
+macos/Flutter/ephemeral/
 
-# Android
-android/.gradle/
-android/app/**/local.properties
-android/*.iml
-android/app/build/
-android/build/
+# IDE/OS
+.idea/
+.vscode/
+*.iml
+.DS_Store
 
-# Web build artifacts
+# Secrets (defense-in-depth)
+*.env
+*.env.*
+serviceAccount*.json
+
+# Web build artifacts (if you build web)
 build/web/
-
-# Firebase local emulator & hosting cache
-.firebase/
-.firebase*/  
-hosting/
-hosting.*  
-
-.metadata
-hosting
-firebase.json
-ios
-android

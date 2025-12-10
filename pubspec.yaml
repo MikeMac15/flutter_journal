@@ -20,11 +20,22 @@ dependencies:
   provider: ^6.1.2
   vertical_card_pager: ^1.4.0
   intl: ^0.20.2
+  flutter_colorpicker: ^1.0.3
+  flutter_image_compress: ^2.4.0 
+  web: ^1.1.1
+  transparent_image: ^2.0.1
+  gap: ^3.0.1
+  crypto: ^3.0.3
+  exif: ^3.2.0
+  image: ^4.5.4
 
 dev_dependencies:
   flutter_test:
     sdk: flutter
-  flutter_lints: ^5.0.0
+  flutter_lints: ^6.0.0
 
 flutter:
+  assets:
+    - assets/images/
+    - assets/images/questions/
   uses-material-design: true

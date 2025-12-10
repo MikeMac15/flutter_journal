@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
+import 'package:intl/intl.dart';
 import 'package:journal/features/pictures/view_chosen_images.dart';
 import 'package:journal/pages/journal_entry/activity_list.dart';
+import 'package:journal/pages/journal_view/entry_editor.dart';
 import 'package:journal/providers/db_provider.dart';
 import 'package:provider/provider.dart';
 
@@ -14,187 +16,186 @@ class JournalEntryViewPage extends StatefulWidget {
 }
 
 class JournalEntryViewPageState extends State<JournalEntryViewPage> {
-  late String _entry;
-  late String _location;
-  late List<String> _imgUrls;
-  late List<Map<String, dynamic>> _activities;
-  late DateTime _entryDate;
-
-  @override
-  void initState() {
-    super.initState();
-    _loadEntryData();
-  }
-
-  void _loadEntryData() {
-    final entryData = Provider.of<DBProvider>(context, listen: false)
-        .getJournalEntryById(widget.entryId);
-
-    if (entryData != null && entryData.isNotEmpty) {
-      setState(() {
-        _entry = entryData['entry'] ?? '';
-        _location = entryData['location'] ?? '';
-        _imgUrls = List<String>.from(entryData['imgUrls'] ?? []);
-        _activities = List<Map<String, dynamic>>.from(entryData['activities'] ?? []);
-        _entryDate = entryData['date'] is DateTime
-            ? entryData['date']
-            : DateTime.parse(entryData['date'].toString());
-      });
-    } else {
-      setState(() {
-        _entry = 'Entry not found';
-        _location = '';
-        _imgUrls = [];
-        _activities = [];
-        _entryDate = DateTime.now();
-      });
+    Future<void> _refreshEntryData() async {
+      // Trigger a re-fetch of the entry data
+      final dbProvider = Provider.of<DBProvider>(context, listen: false);
+      dbProvider.getJournalEntryById(widget.entryId);
     }
-  }
-
   @override
   Widget build(BuildContext context) {
+
+    final entryData = Provider.of<DBProvider>(context, listen: true)
+        .getJournalEntryById(widget.entryId);
+
     final theme = Theme.of(context);
-    final dateString = '${_entryDate.month}/${_entryDate.day}/${_entryDate.year}';
+    final maxWidth = MediaQuery.of(context).size.width > 600
+        ? 600.0
+        : MediaQuery.of(context).size.width;
+    final imageHeight = MediaQuery.of(context).size.height * 0.25;
+
+    if (entryData == null) {
+      return Scaffold(
+        appBar: AppBar(title: const Text('Journal Entry')),
+        body: const Center(child: Text('Entry not found')),
+      );
+    }
 
     return Scaffold(
       appBar: AppBar(
-        title: const Text('Journal Entry'),
+        title: Text(DateFormat.yMMMMd().format(entryData.date)),
       ),
-      body: LayoutBuilder(
-        builder: (context, constraints) {
-          // Center content with a max width on wide screens
-          final maxWidth = constraints.maxWidth > 600 ? 600.0 : constraints.maxWidth;
-          final imageHeight = constraints.maxHeight * 0.25;
+      body: Center(
+        child: ConstrainedBox(
+          constraints: BoxConstraints(maxWidth: maxWidth),
+          child: SingleChildScrollView(
+            padding:
+                const EdgeInsets.symmetric(horizontal: 16.0, vertical: 24.0),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.stretch,
+              children: [
+                // // Date
+                // Text(
+                //   DateFormat.yMMMMd().format(entryData.date),
+                //   style: theme.textTheme.titleLarge
+                //       ?.copyWith(fontWeight: FontWeight.bold),
+                //   textAlign: TextAlign.center,
+                // ),
+                // const SizedBox(height: 16),
 
-          return Center(
-            child: ConstrainedBox(
-              constraints: BoxConstraints(maxWidth: maxWidth),
-              child: SingleChildScrollView(
-                padding: const EdgeInsets.symmetric(horizontal: 16.0, vertical: 24.0),
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.stretch,
-                  children: [
-                    // Date
-                    Text(
-                      dateString,
-                      style: theme.textTheme.titleLarge?.copyWith(fontWeight: FontWeight.bold),
-                      textAlign: TextAlign.center,
-                    ),
-                    const SizedBox(height: 16),
-
-                    // Location Card
-                    Card(
-                      elevation: 2,
-                      shape: RoundedRectangleBorder(
-                        borderRadius: BorderRadius.circular(12),
-                      ),
-                      child: Padding(
-                        padding: const EdgeInsets.all(16.0),
-                        child: Row(
-                          children: [
-                            const Icon(Icons.location_on_outlined),
-                            const SizedBox(width: 8),
-                            Expanded(
-                              child: Text(
-                                _location.isNotEmpty ? _location : 'No location set',
-                                style: theme.textTheme.bodyLarge,
-                              ),
-                            ),
-                          ],
+                // Location Card
+                Card(
+                  elevation: 2,
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(12),
+                  ),
+                  child: Padding(
+                    padding: const EdgeInsets.all(16.0),
+                    child: Row(
+                      children: [
+                        const Icon(Icons.location_on_outlined),
+                        const SizedBox(width: 8),
+                        Expanded(
+                          child: Text(
+                            (entryData.location ?? '').isNotEmpty
+                                ? entryData.location ?? 'No location set'
+                                : 'No location set',
+                            style: theme.textTheme.bodyLarge,
+                          ),
                         ),
-                      ),
+                      ],
                     ),
-                    const SizedBox(height: 16),
-
-                    // Entry Card
-                    Card(
-                      elevation: 2,
-                      shape: RoundedRectangleBorder(
-                        borderRadius: BorderRadius.circular(12),
-                      ),
-                      child: Padding(
-                        padding: const EdgeInsets.all(16.0),
-                        child: Column(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          children: [
-                            Text(
-                              'My Thoughts',
-                              style: theme.textTheme.titleMedium?.copyWith(fontWeight: FontWeight.bold),
-                            ),
-                            const SizedBox(height: 8),
-                            Text(
-                              _entry,
-                              style: theme.textTheme.bodyMedium,
-                            ),
-                          ],
-                        ),
-                      ),
-                    ),
-                    const SizedBox(height: 16),
-
-                    // Activities Card
-                    Card(
-                      elevation: 2,
-                      shape: RoundedRectangleBorder(
-                        borderRadius: BorderRadius.circular(12),
-                      ),
-                      child: Padding(
-                        padding: const EdgeInsets.all(16.0),
-                        child: Column(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          children: [
-                            Text(
-                              'Activities',
-                              style: theme.textTheme.titleMedium?.copyWith(fontWeight: FontWeight.bold),
-                            ),
-                            const SizedBox(height: 8),
-                            _activities.isNotEmpty
-                                ? ActivityList(savedActivities: _activities)
-                                : Text(
-                                    'No activities for this entry',
-                                    style: theme.textTheme.bodyMedium,
-                                  ),
-                          ],
-                        ),
-                      ),
-                    ),
-                    const SizedBox(height: 16),
-
-                    // Images Card
-                    Card(
-                      elevation: 2,
-                      shape: RoundedRectangleBorder(
-                        borderRadius: BorderRadius.circular(12),
-                      ),
-                      child: Padding(
-                        padding: const EdgeInsets.all(16.0),
-                        child: Column(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          children: [
-                            Text(
-                              'Photos',
-                              style: theme.textTheme.titleMedium?.copyWith(fontWeight: FontWeight.bold),
-                            ),
-                            const SizedBox(height: 8),
-                            _imgUrls.isNotEmpty
-                                ? SizedBox(
-                                    height: imageHeight,
-                                    child: ViewChosenImages(chosenPhotoPaths: _imgUrls),
-                                  )
-                                : Text(
-                                    'No images for this entry',
-                                    style: theme.textTheme.bodyMedium,
-                                  ),
-                          ],
-                        ),
-                      ),
-                    ),
-                  ],
+                  ),
                 ),
-              ),
+                const SizedBox(height: 16),
+
+                // Entry Card
+                Card(
+                  elevation: 2,
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(12),
+                  ),
+                  child: Padding(
+                    padding: const EdgeInsets.all(16.0),
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text(
+                          'Journal Entry',
+                          style: theme.textTheme.titleMedium
+                              ?.copyWith(fontWeight: FontWeight.bold),
+                        ),
+                        const SizedBox(height: 8),
+                        Text(
+                          entryData.entry ?? '',
+                          style: theme.textTheme.bodyMedium,
+                        ),
+                      ],
+                    ),
+                  ),
+                ),
+                const SizedBox(height: 16),
+
+                // Activities Card
+                entryData.activities != []
+                    ?  const SizedBox.shrink()
+                    : Card(
+                  elevation: 2,
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(12),
+                  ),
+                  child: Padding(
+                    padding: const EdgeInsets.all(10.0),
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text(
+                          'Activities',
+                          style: theme.textTheme.titleMedium
+                              ?.copyWith(fontWeight: FontWeight.bold),
+                        ),
+                        const SizedBox(height: 8),
+                        entryData.activities?.isNotEmpty == true
+                            ? ActivityList(
+                                savedActivities: entryData.activities ?? [])
+                            : Text(
+                                'No activities for this entry',
+                                style: theme.textTheme.bodyMedium,
+                              ),
+                      ],
+                    ),
+                  ),
+                ),
+                // const SizedBox(height: 16),
+
+                // Images Card
+                Card(
+                  elevation: 2,
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(12),
+                  ),
+                  child: Padding(
+                    padding: const EdgeInsets.all(16.0),
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text(
+                          'Photos',
+                          style: theme.textTheme.titleMedium
+                              ?.copyWith(fontWeight: FontWeight.bold),
+                        ),
+                        const SizedBox(height: 8),
+                        entryData.imgUrls.isNotEmpty
+                            ? SizedBox(
+                                height: imageHeight,
+                                child: ViewChosenImages(
+                                    chosenPhotos: entryData.imgUrls),
+                              )
+                            : Text(
+                                'No images for this entry',
+                                style: theme.textTheme.bodyMedium,
+                              ),
+                      ],
+                    ),
+                  ),
+                ),
+                const SizedBox(height: 24),
+
+                // Editor for editing the entry
+                EntryEditor(
+                  entryId: widget.entryId,
+                  onEntryUpdated: _refreshEntryData, // Triggers re-fetch after edit
+                  entry: entryData.entry ?? '',
+                  location: entryData.location ?? '',
+                  entryDate: entryData.date,
+                  imgUrls: entryData.imgUrls,
+                  activities: entryData.activities ?? [],
+                ),
+
+                const SizedBox(height: 24),
+              ],
             ),
-          );
-        },
+          ),
+        ),
       ),
     );
   }
