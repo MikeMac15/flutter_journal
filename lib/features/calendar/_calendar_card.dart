@@ -163,11 +163,8 @@ class _CalendarCardState extends State<CalendarCard> {
                 },
               ),
             ),
-            // --- FIX: Wrap the list widget in Flexible ---
-            // This prevents the ListView from taking infinite height and causing an overflow.
-            Flexible(
-              child: _buildEntryList(theme),
-            ),
+            _buildEntryList(theme),
+           
             // legend key
             _buildKey(theme),
           ],

@@ -5,6 +5,8 @@ import 'package:firebase_core/firebase_core.dart';
 import 'package:journal/firebase_options.dart';
 import 'package:journal/pages/login_page.dart';
 import 'package:journal/pages/myhomepage.dart';
+// import 'package:journal/pages/questionWalls/questions/admin/seeder.dart';
+import 'package:journal/pages/questionWalls/questions/provider/question_provider.dart';
 import 'package:journal/providers/db_provider.dart';
 import 'package:journal/providers/theme_provider.dart';
 import 'package:journal/providers/user_provider.dart';
@@ -17,11 +19,14 @@ Future<void> main() async {
     await FirebaseAuth.instance.setPersistence(Persistence.LOCAL);
   }
 
+  // await QuestionSeeder.seedDatabase();
+
   runApp(
     MultiProvider(
       providers: [
         // 1) First, make UserProvider available:
         ChangeNotifierProvider(create: (_) => UserProvider()),
+        ChangeNotifierProvider(create: (_) => QuestionsProvider()),
 
         // 2) Now that UserProvider exists, proxy it to ThemeProvider:
         ChangeNotifierProxyProvider<UserProvider, ThemeProvider>(

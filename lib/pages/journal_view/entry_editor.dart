@@ -77,6 +77,63 @@ class _EntryEditorState extends State<EntryEditor> {
     }
   }
 
+  /// NEW: Deletes the entire entry from Firestore
+  Future<void> _deleteEntry(BuildContext dialogContext) async {
+    // 1. Show Confirmation Dialog
+    final confirm = await showDialog<bool>(
+      context: dialogContext,
+      builder: (ctx) => AlertDialog(
+        title: const Text('Delete Entry?'),
+        content: const Text(
+            'Are you sure you want to delete this journal entry? This action cannot be undone.'),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.of(ctx).pop(false),
+            child: const Text('Cancel'),
+          ),
+          TextButton(
+            onPressed: () => Navigator.of(ctx).pop(true),
+            style: TextButton.styleFrom(foregroundColor: Colors.red),
+            child: const Text('Delete'),
+          ),
+        ],
+      ),
+    );
+
+    if (confirm != true) return;
+
+    final uid = dbProvider.userId;
+    if (uid == null) return;
+
+    try {
+      // 2. Delete from Firestore
+      await FirebaseFirestore.instance
+          .collection('users')
+          .doc(uid)
+          .collection('entries')
+          .doc(widget.entryId)
+          .delete();
+
+      // 3. Refresh local provider data to remove the item from lists
+      await dbProvider.fetchJournalEntrySnapshot();
+
+      if (mounted) {
+        Navigator.of(dialogContext).pop(); // Close the Edit Dialog
+        Navigator.of(context).pop(); // Close the Entry View Page (Back to list)
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text('Entry deleted successfully')),
+        );
+      }
+    } catch (e) {
+      debugPrint('Error deleting entry: $e');
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('Failed to delete entry: $e')),
+        );
+      }
+    }
+  }
+
   Future<void> _saveEdits(
     String newEntry,
     String newLocation,
@@ -248,8 +305,8 @@ class _EntryEditorState extends State<EntryEditor> {
                           label: const Text('Add Photos'),
                         ),
                         const SizedBox(height: 12),
-                        const SizedBox(height: 12),
-                        const SizedBox(height: 12),
+                        
+                        // Delete First Photo Button
                         ElevatedButton.icon(
                           onPressed: () async {
                             final snap = await FirebaseFirestore.instance
@@ -273,15 +330,21 @@ class _EntryEditorState extends State<EntryEditor> {
                           icon: const Icon(Icons.delete_forever),
                           label: const Text('Delete First Photo'),
                         ),
-                        const SizedBox(height: 12),
-                        const SizedBox(height: 12),
-                        const SizedBox(height: 12),
+                        
+                        // NEW: Divider to separate delete action
+                        const Divider(height: 30, thickness: 1),
 
-                        // ----- New Images Preview -----
-                        // Expanded(
-                        //   child: ViewThumbnailImages(photoSources: _newImages),
-                        // ),
-                        // Thumbnails
+                        // NEW: Delete Entire Post Button
+                        TextButton.icon(
+                          onPressed: () => _deleteEntry(dialogCtx),
+                          icon: const Icon(Icons.delete, color: Colors.red),
+                          label: const Text(
+                            'Delete Entire Entry',
+                            style: TextStyle(color: Colors.red),
+                          ),
+                        ),
+                        
+                        const SizedBox(height: 12),
                       ],
                     ),
                   ),
