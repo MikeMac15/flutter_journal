@@ -1,3 +1,4 @@
+import 'dart:async';
 import 'dart:collection';
 import 'dart:io';
 import 'dart:math';
@@ -201,7 +202,7 @@ class ImageWithMetadata {
   final XFile file;
   final Map<String, dynamic> metadata;
 
-  ImageWithMetadata({required this.file, required this.metadata});
+  ImageWithMetadata({required this.file, this.metadata = const {}});
 }
 
 class DBProvider extends ChangeNotifier {
@@ -527,41 +528,62 @@ class DBProvider extends ChangeNotifier {
     }
   }
 
-  Future<String?> _getOrUploadPic(XFile xfile) async {
-    // 1. Calculate the hash of the selected image.
-    final String imageHash = await calculateImageHash(xfile);
+Future<void> preSavePhoto(XFile file) async {
 
-    // 2. Check Firestore for an existing hash using the CORRECTED nested path.
-    //    We point to a single document to store all of the user's hashes.
+  // 2. Extract Metadata (You need this for the journal entry anyway)
+
+
+  // 3. Trigger background upload using the hash logic we discussed
+  unawaited(_getOrUploadPic(file));
+}
+
+
+
+  final Map<String, Future<String?>> _activeUploads = {};
+Future<String?> getOrUploadPic(XFile file)async{
+    return _getOrUploadPic(file);
+}
+Future<String?> _getOrUploadPic(XFile xfile) async {
+  final String imageHash = await calculateImageHash(xfile);
+
+  // 1. Check if this exact hash is CURRENTLY being uploaded right now
+  if (_activeUploads.containsKey(imageHash)) {
+    return _activeUploads[imageHash];
+  }
+
+  // 2. Start the process and store the Future in our map
+  final uploadFuture = () async {
+    // Check Firestore for existing record
     final hashDocRef = FirebaseFirestore.instance
         .collection('users')
         .doc(userId)
         .collection('imageHashes')
-        .doc('userImageHashes'); // Static document name for all user hashes
+        .doc('userImageHashes');
 
     final hashDoc = await hashDocRef.get();
 
     if (hashDoc.exists && hashDoc.data()!.containsKey(imageHash)) {
-      // 3. DUPLICATE FOUND: Return the existing URL and skip the upload.
-      print('Duplicate image found. Reusing existing URL.');
       return hashDoc.data()![imageHash] as String;
-    } else {
-      // 4. NEW IMAGE: Proceed with the upload.
-      print('New image. Uploading to storage...');
-      final String? downloadUrl = await _uploadPic(xfile);
-
-      if (downloadUrl != null) {
-        // 5. After successful upload, save the new hash and URL to the user's hash document.
-        //    Use SetOptions(merge: true) to add a new field without overwriting the document.
-        await hashDocRef.set(
-          {imageHash: downloadUrl},
-          SetOptions(merge: true),
-        );
-      }
-      return downloadUrl;
     }
-  }
 
+    // New Image: Upload
+    final String? downloadUrl = await _uploadPic(xfile);
+
+    if (downloadUrl != null) {
+      await hashDocRef.set({imageHash: downloadUrl}, SetOptions(merge: true));
+    }
+    return downloadUrl;
+  }();
+
+  _activeUploads[imageHash] = uploadFuture;
+  
+  try {
+    return await uploadFuture;
+  } finally {
+    // Clean up map once done
+    _activeUploads.remove(imageHash);
+  }
+}
   Future<List<String>> uploadMultiPics(List<XFile> xfiles) async {
     if (_userId == null) {
       throw StateError('DBProvider: User ID is not set.');

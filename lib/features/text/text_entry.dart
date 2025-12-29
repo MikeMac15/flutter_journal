@@ -48,12 +48,16 @@ class TextEntry extends StatelessWidget {
     return TextField(
       controller: controller,
       maxLines: isMultiLine ? null : 1,
+      minLines: isMultiLine ? null : 1,
+      expands: isMultiLine,
+      textAlignVertical: TextAlignVertical.top,
       autocorrect: true,
       enableSuggestions: true,
       textCapitalization: TextCapitalization.sentences,
       style: theme.textTheme.bodyMedium,
       decoration: InputDecoration(
         labelText: labelText,
+        alignLabelWithHint: true,
         fillColor: fillColor,
         filled: true,
         border: OutlineInputBorder(

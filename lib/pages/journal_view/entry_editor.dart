@@ -53,8 +53,8 @@ class _EntryEditorState extends State<EntryEditor> {
       if (files.isEmpty) return;
 
       final chosen = await Future.wait(files.map((file) async {
-        final metadata = await extractCorePhotoMetadata(file);
-        return ImageWithMetadata(file: file, metadata: metadata);
+   
+        return ImageWithMetadata(file: file, metadata: {});
       }));
 
       // Optional de-dupe by path

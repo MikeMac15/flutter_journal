@@ -28,6 +28,7 @@ dependencies:
   crypto: ^3.0.3
   exif: ^3.2.0
   image: ^4.5.4
+  convert: ^3.1.2
 
 dev_dependencies:
   flutter_test:

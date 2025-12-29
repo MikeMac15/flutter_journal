@@ -122,13 +122,15 @@ class _JournalEntryPageState extends State<JournalEntryPage> {
     });
   }
 
-  Future<void> _getImageFromGallery() async {
+  Future<void> _getImageFromGallery(DBProvider db) async {
     final List<XFile> files =
         await _myImagePicker.pickMultipleImagesFromGallery();
     for (final file in files) {
       setState(() {
         _chosenPhotos.add(file);
       });
+
+
     }
   }
 
@@ -333,7 +335,7 @@ class _JournalEntryPageState extends State<JournalEntryPage> {
 
             // Add image button
             RaiseButton(
-                onPressed: _getImageFromGallery,
+                onPressed:() => _getImageFromGallery(context.read<DBProvider>()),
                 label: 'Add Image',
                 icon: Icons.add_a_photo),
 
@@ -363,8 +365,8 @@ class _JournalEntryPageState extends State<JournalEntryPage> {
   //    Make sure its name is clear, like _chosenPhotosWithMetadata.
   final List<ImageWithMetadata> chosenPhotosWithMetadata = await Future.wait(
     _chosenPhotos.map((file) async {
-      final metadata = await extractCorePhotoMetadata(file);
-      return ImageWithMetadata(file: file, metadata: metadata);
+
+      return ImageWithMetadata(file: file, metadata: {});
     }),
   );
   final List<ImageWithMetadata> imagesToSave = List.from(chosenPhotosWithMetadata);
