@@ -44,3 +44,5 @@ serviceAccount*.json
 
 # Web build artifacts (if you build web)
 build/web/
+
+._*

@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:journal/features/_fade_route.dart';
 import 'package:journal/features/menu_buttons/image_button.dart';
 import 'package:journal/pages/chapters/chapters_page.dart';
+import 'package:journal/pages/questionWalls/questions/questions_main_page.dart';
 import 'package:journal/pages/questionWalls/year_in_review_questions_page.dart';
 import 'package:journal/pages/questionWalls/ranked_list_memories/ranked_list_home.dart';
 
@@ -18,13 +19,8 @@ class QuestionsHome extends StatelessWidget {
       'asset': 'assets/images/questions/disco.png',
     },
     {
-      'title': 'Ranked Lists',
-      'page': const RankedListHome(),
-      'asset': 'assets/images/questions/yearInReview.png',
-    },
-    {
       'title': 'Questions',
-      'page': const RankedListHome(),
+      'page': const QuestionsMainPage(),
       'asset': 'assets/images/questions/questionSky.png',
     },
     {
@@ -39,39 +35,6 @@ class QuestionsHome extends StatelessWidget {
   }
     ];
 
-    final smallCards = [
-      {
-        'title': 'Concert',
-        'page': const YearInReviewQuestionsPage(), // replace
-        'asset': 'assets/images/questions/concerts.png',
-      },
-      {
-        'title': 'Book',
-        'page': const YearInReviewQuestionsPage(), // replace
-        'asset': 'assets/images/questions/favoritesWall.png',
-      },
-      {
-        'title': 'Tv Show',
-        'page': const YearInReviewQuestionsPage(), // replace
-        'asset': 'assets/images/questions/monthlyRecap.png',
-      },
-      {
-        'title': 'Vacations',
-        'page': const YearInReviewQuestionsPage(), // replace
-        'asset': 'assets/images/questions/concerts.png',
-      },
-      {
-        'title': '',
-        'page': const YearInReviewQuestionsPage(), // replace
-        'asset': 'assets/images/questions/favoritesWall.png',
-      },
-      {
-        'title': 'Tv Show',
-        'page': const YearInReviewQuestionsPage(), // replace
-        'asset': 'assets/images/questions/monthlyRecap.png',
-      },
-      // add more entries as needed...
-    ];
 
     return Scaffold(
       // appBar: AppBar(title: const Text('Questions Home'), surfaceTintColor: Theme.of(context).colorScheme.surfaceTint),
@@ -98,23 +61,21 @@ class QuestionsHome extends StatelessWidget {
               SizedBox(
                 width: MediaQuery.of(context).size.width * 0.8,
                 child: LargeImageButton(
+                  title: largeButtons[1]['title'] as String,
+                  backgroundImage: AssetImage(largeButtons[1]['asset'] as String),
+                  onPressed: () => Navigator.of(context).push(
+                    fadeRoute(largeButtons[1]['page'] as Widget),
+                  ),
+                ),
+              ),
+              const SizedBox(height: 24),
+              SizedBox(
+                width: MediaQuery.of(context).size.width * 0.8,
+                child: LargeImageButton(
                   title: largeButtons[2]['title'] as String,
                   backgroundImage: AssetImage(largeButtons[2]['asset'] as String),
                   onPressed: () => Navigator.of(context).push(
                     fadeRoute(largeButtons[2]['page'] as Widget),
-                  ),
-                ),
-              ),
-
-              const SizedBox(height: 24),
-
-              SizedBox(
-                width: MediaQuery.of(context).size.width * 0.8,
-                child: LargeImageButton(
-                  title: largeButtons[1]['title'] as String,
-                  backgroundImage: AssetImage('assets/images/default_header.png'),
-                  onPressed: () => Navigator.of(context).push(
-                    fadeRoute(largeButtons[1]['page'] as Widget),
                   ),
                 ),
               ),
@@ -126,17 +87,6 @@ class QuestionsHome extends StatelessWidget {
                   backgroundImage: AssetImage(largeButtons[3]['asset'] as String),
                   onPressed: () => Navigator.of(context).push(
                     fadeRoute(largeButtons[3]['page'] as Widget),
-                  ),
-                ),
-              ),
-              const SizedBox(height: 24),
-              SizedBox(
-                width: MediaQuery.of(context).size.width * 0.8,
-                child: LargeImageButton(
-                  title: largeButtons[4]['title'] as String,
-                  backgroundImage: AssetImage(largeButtons[4]['asset'] as String),
-                  onPressed: () => Navigator.of(context).push(
-                    fadeRoute(largeButtons[4]['page'] as Widget),
                   ),
                 ),
               ),

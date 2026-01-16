@@ -19,11 +19,18 @@ class UserProvider extends ChangeNotifier {
 
   UnmodifiableMapView<String, dynamic>? get userInfo =>
       _user != null ? UnmodifiableMapView({"user": _user}) : null;
+      
 
-  bool get isLoggedIn => _user != null;
-  String? get userId => _user?.uid;
-  String? get userEmail => _user?.email;
-  String? get userDisplayName => _user?.displayName;
+
+ 
+  bool get isLoggedIn => _user != null || _isDemo;
+
+  String? get userId => _isDemo ? 'demo_user_id' : _user?.uid;
+
+  String? get userEmail => _isDemo ? 'recruiter@demo.com' : _user?.email;
+ 
+  String? get userDisplayName => _isDemo ? 'Recruiter Demo' : _user?.displayName;
+
   String? get userPhotoURL => _user?.photoURL;
 
   UserProvider() {
@@ -53,6 +60,7 @@ class UserProvider extends ChangeNotifier {
     await _auth.signOut();
     _user = null;
     _headerImageUrl = null;
+    _isDemo = false; // Reset demo flag
     notifyListeners();
   }
 
@@ -121,4 +129,20 @@ class UserProvider extends ChangeNotifier {
     _headerImageUrl = url;
     notifyListeners();
   }
+
+
+
+
+  bool _isDemo = false;
+  bool get isDemo => _isDemo;
+
+
+  // Method to trigger demo mode
+  void enterDemoMode() {
+    _isDemo = true;
+    // Set a placeholder image or leave null
+    _headerImageUrl = "https://picsum.photos/id/1018/1000/600"; 
+    notifyListeners();
+  }
+
 }

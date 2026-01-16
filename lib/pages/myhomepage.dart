@@ -44,8 +44,7 @@ class _MyHomePageState extends State<MyHomePage> {
       icon: Icons.home_outlined,
       selectedIcon: Icons.home,
       label: 'Home',
-      component: 
-      Home(),
+      component: Home(),
     ),
     MyPage(
       icon: Icons.cloud_outlined,
@@ -115,15 +114,18 @@ class _MyHomePageState extends State<MyHomePage> {
     final theme = Theme.of(context);
 
     final userProv = context.watch<UserProvider>();
-    final headerUrl = userProv.headerImageUrl;
+    // We don't strictly need the headerUrl anymore if we aren't doing the image background
+    // final headerUrl = userProv.headerImageUrl; 
 
     final firstName = userProv.userDisplayName != null
         ? '${userProv.userDisplayName!.split(' ').first}\'s'
         : 'My';
-    // LayoutBuilder rebuilds when constraints change (e.g., window resize)
+
     return LayoutBuilder(
       builder: (context, constraints) {
-        // Use NavigationRail for wider screens
+        // ----------------------------------------------------------
+        // WIDE SCREEN / TABLET VIEW (Unchanged)
+        // ----------------------------------------------------------
         if (constraints.maxWidth > 600) {
           return Scaffold(
             appBar: AppBar(
@@ -153,30 +155,13 @@ class _MyHomePageState extends State<MyHomePage> {
                   },
                   labelType: NavigationRailLabelType.all,
                   destinations: <NavigationRailDestination>[
-                    _buildTabItem(
-                      top: true,
-                      page: _pages[0],
-                      index: 0,
-                    ),
-                    _buildTabItem(
-                      top: true,
-                      page: _pages[1],
-                      index: 1,
-                    ),
-                    _buildTabItem(
-                      top: true,
-                      page: _pages[2],
-                      index: 2,
-                    ),
-                    _buildTabItem(
-                      top: true,
-                      page: _pages[3],
-                      index: 3,
-                    ),
+                    _buildTabItem(top: true, page: _pages[0], index: 0),
+                    _buildTabItem(top: true, page: _pages[1], index: 1),
+                    _buildTabItem(top: true, page: _pages[2], index: 2),
+                    _buildTabItem(top: true, page: _pages[3], index: 3),
                   ],
                 ),
                 const VerticalDivider(thickness: 1, width: 1),
-                // Main content
                 Expanded(
                   child: _pages[_selectedIndex].component,
                 ),
@@ -184,131 +169,78 @@ class _MyHomePageState extends State<MyHomePage> {
             ),
           );
         }
-        // Use BottomNavigationBar and SliverAppBar for narrower screens
+        // ----------------------------------------------------------
+        // MOBILE / NARROW VIEW (Updated)
+        // ----------------------------------------------------------
         else {
           return Scaffold(
-            body: 
-            _selectedIndex == 0
-            ? CustomScrollView(
-              slivers: [
-                // The SliverAppBar from your request
-                SliverAppBar(
-                  pinned: false,
-                  elevation: 2,
-                  expandedHeight: 250,
-                  backgroundColor: theme.primaryColor,
-                  flexibleSpace: FlexibleSpaceBar(
-                    title: Text(
-                      '$firstName Journal',
-                      style: theme.textTheme.titleMedium?.copyWith(
-                        color: Colors.white,
-                        letterSpacing: 1.2,
-                        fontSize: 24,
-                        fontWeight: FontWeight.bold,
-                        shadows: [
-                          const Shadow(
-                            color: Color.fromARGB(255, 0, 0, 0),
-                            offset: Offset(1, 2),
-                            blurRadius: 5,
-                          ),
-                        ],
-                      ),
-                    ),
-                    centerTitle: true,
-                    background: Stack(
-                      fit: StackFit.expand,
-                      children: [
-                        Image.network(
-                          headerUrl ?? defaultHeaderUrl,
-                          fit: BoxFit.cover,
-                          errorBuilder: (context, error, stackTrace) =>
-                              Image.network(defaultHeaderUrl,
-                                  fit: BoxFit.cover),
-                        ),
-                        const DecoratedBox(
-                          decoration: BoxDecoration(
-                            gradient: LinearGradient(
-                              colors: [
-                                Color.fromARGB(180, 0, 0, 0),
-                                Colors.transparent
-                              ],
-                              begin: Alignment.bottomCenter,
-                              end: Alignment.topCenter,
-                            ),
-                          ),
-                        ),
-                      ],
-                    ),
-                  ),
-                  actions: [
-                    Padding(
-                      padding: const EdgeInsets.symmetric(horizontal: 8.0),
-                      child: IconButton(
-                        icon: const Icon(Icons.more_vert, color: Colors.white),
-                        onPressed: () {},
-                      ),
-                    ),
-                  ],
+            // NEW: Regular AppBar added here
+            appBar: AppBar(
+              backgroundColor: theme.primaryColor,
+              // Ensures the back arrow/menu icons are white
+              iconTheme: const IconThemeData(color: Colors.white), 
+              centerTitle: true,
+              title: Text(
+                '$firstName Journal',
+                style: const TextStyle(
+                  color: Colors.white,
+                  fontWeight: FontWeight.bold,
                 ),
-                // The main content of the selected page
-                SliverToBoxAdapter(
-                  child: Container(
-                    // Added a container to better position the content
-                    padding: const EdgeInsets.only(top: 20.0),
-                    height: MediaQuery.of(context).size.height,
-                    child: _pages[_selectedIndex].component,
+              ),
+              actions: [
+                Padding(
+                  padding: const EdgeInsets.symmetric(horizontal: 8.0),
+                  child: IconButton(
+                    icon: const Icon(Icons.more_vert),
+                    onPressed: () {},
                   ),
                 ),
               ],
-            ) : Container(
-                    // Added a container to better position the content
-                    padding: const EdgeInsets.only(top: 20.0),
-                    height: MediaQuery.of(context).size.height,
-                    child: _pages[_selectedIndex].component,
-                  ),
-
-            // Bottom Navigation Bar
-            floatingActionButton: _selectedIndex == 0
-            ?
-             FloatingActionButton.large(
-              onPressed: () {
-                Navigator.of(context).push(
-                  fadeRoute(
-                    JournalEntryPage(),
-                  ),
-                );
-              },
-              backgroundColor: Colors.indigo,
-              shape: const CircleBorder(),
-              elevation: 10.0,
-              child: const Icon(Icons.add, color: Colors.white, size: 28.0),
-            )
-            :
-            FloatingActionButton(
-              onPressed: () {
-                Navigator.of(context).push(
-                  fadeRoute(
-                    JournalEntryPage(),
-                  ),
-                );
-              },
-              backgroundColor: Colors.indigo,
-              shape: const CircleBorder(),
-              elevation: 10.0,
-              child: const Icon(Icons.add, color: Colors.white, size: 28.0),
             ),
+            
+            // NEW: Simplified Body (No more CustomScrollView/Slivers)
+            body: _pages[_selectedIndex].component,
+
+            // Floating Action Bar logic
+            floatingActionButton: _selectedIndex == 0
+                ? FloatingActionButton.large(
+                    onPressed: () {
+                      Navigator.of(context).push(
+                        fadeRoute(
+                          JournalEntryPage(),
+                        ),
+                      );
+                    },
+                    backgroundColor: Colors.indigo,
+                    shape: const CircleBorder(),
+                    elevation: 10.0,
+                    child:
+                        const Icon(Icons.add, color: Colors.white, size: 28.0),
+                  )
+                : FloatingActionButton(
+                    onPressed: () {
+                      Navigator.of(context).push(
+                        fadeRoute(
+                          JournalEntryPage(),
+                        ),
+                      );
+                    },
+                    backgroundColor: Colors.indigo,
+                    shape: const CircleBorder(),
+                    elevation: 10.0,
+                    child:
+                        const Icon(Icons.add, color: Colors.white, size: 28.0),
+                  ),
             floatingActionButtonLocation:
                 FloatingActionButtonLocation.centerDocked,
+            
+            // Bottom Navigation Bar
             bottomNavigationBar: BottomAppBar(
-              
               shape: const CircularNotchedRectangle(),
-
-              // notchMargin: 1.0,
               child: SizedBox(
                 width: double.infinity,
                 height: 60.0,
                 child: Row(
-
                   mainAxisAlignment: MainAxisAlignment.start,
                   children: <Widget>[
                     Expanded(
@@ -340,5 +272,4 @@ class _MyHomePageState extends State<MyHomePage> {
         }
       },
     );
-  }
-}
+  }}

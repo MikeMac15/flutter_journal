@@ -44,8 +44,8 @@ class _PastPostsState extends State<PastPosts> {
         ),
         ConstrainedBox(
           constraints: BoxConstraints(
-            maxHeight: 250,
-            minHeight: 200,
+            maxHeight: 175,
+            minHeight: 100,
           ),
           child: CarouselView.weighted(
             controller: controller,
