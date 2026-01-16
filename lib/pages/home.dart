@@ -2,7 +2,8 @@ import 'dart:math';
 
 import 'package:flutter/material.dart';
 import 'package:journal/features/calendar/_calendar_card.dart';
-import 'package:journal/pages/home/fav_chapters.dart';
+import 'package:journal/features/_fade_route.dart'; // Import for animation
+import 'package:journal/pages/chapters/chapter_view_page.dart'; // Import for navigation
 import 'package:journal/pages/home/past_posts.dart';
 import 'package:journal/pages/questions_home.dart';
 import 'package:journal/pages/questionWalls/questions/model/question_models.dart';
@@ -31,6 +32,9 @@ class _HomeState extends State<Home> {
   Widget build(BuildContext context) {
     final dbProvider = Provider.of<DBProvider>(context, listen: true);
     final journalEntries = dbProvider.getSortedJournalListForThisMonth();
+    
+    // Convert the chapters map to a list for display
+    final chapters = dbProvider.chapters.values.toList();
 
     return SingleChildScrollView(
       padding: const EdgeInsets.symmetric(vertical: 16.0, horizontal: 20.0),
@@ -47,26 +51,112 @@ class _HomeState extends State<Home> {
           
           // const SizedBox(height: 10),
           
-          // --- Updated Random Question Card ---
+          // --- Random Question Card ---
           const RandomQuestionCard(),
           
           const SizedBox(height: 10),
           
           CalendarCard(),
           
-          // Chapters Section
+          const SizedBox(height: 20),
+
+          // --- Chapters Section ---
           Text(
             'Chapters',
             style: Theme.of(context).textTheme.titleLarge,
           ),
-          
-          FavChapters(),
+          const SizedBox(height: 10),
+
+          // Display Chapters Horizontally
+          if (chapters.isEmpty)
+            const Padding(
+              padding: EdgeInsets.all(8.0),
+              child: Text("No chapters created yet."),
+            )
+          else
+            SizedBox(
+              height: 180, // Fixed height for horizontal list
+              child: ListView.separated(
+                scrollDirection: Axis.horizontal,
+                itemCount: chapters.length,
+                separatorBuilder: (ctx, i) => const SizedBox(width: 12),
+                itemBuilder: (ctx, index) {
+                  final chapter = chapters[index];
+                  return Card(
+                    clipBehavior: Clip.antiAlias,
+                    elevation: 2,
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(12),
+                    ),
+                    child: InkWell(
+                      onTap: () {
+                        // --- NAVIGATION LOGIC ---
+                        Navigator.of(context).push(
+                          fadeRoute(
+                            ChapterDetailPage(chapterId: chapter.id),
+                            duration: const Duration(milliseconds: 500),
+                          ),
+                        );
+                      },
+                      child: SizedBox(
+                        width: 140, // Fixed width for each card
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.stretch,
+                          children: [
+                            // Chapter Image
+                            Expanded(
+                              child: chapter.image.isNotEmpty
+                                  ? Image.network(
+                                      chapter.image,
+                                      fit: BoxFit.cover,
+                                      errorBuilder: (_, __, ___) => Container(
+                                        color: Colors.grey.shade300,
+                                        child: const Icon(Icons.broken_image),
+                                      ),
+                                    )
+                                  : Container(
+                                      color: Colors.blueGrey.shade100,
+                                      child: const Icon(Icons.book, size: 40, color: Colors.white),
+                                    ),
+                            ),
+                            // Chapter Name
+                            Padding(
+                              padding: const EdgeInsets.all(8.0),
+                              child: Column(
+                                crossAxisAlignment: CrossAxisAlignment.start,
+                                children: [
+                                  Text(
+                                    chapter.name,
+                                    style: Theme.of(context).textTheme.titleSmall?.copyWith(
+                                      fontWeight: FontWeight.bold,
+                                    ),
+                                    maxLines: 1,
+                                    overflow: TextOverflow.ellipsis,
+                                  ),
+                                  Text(
+                                    "${chapter.entryIDs.length} entries",
+                                    style: Theme.of(context).textTheme.bodySmall,
+                                  ),
+                                ],
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
+                    ),
+                  );
+                },
+              ),
+            ),
+            
+            const SizedBox(height: 40), // Bottom padding
         ],
       ),
     );
   }
 }
 
+// ... RandomQuestionCard remains unchanged below ...
 class RandomQuestionCard extends StatefulWidget {
   const RandomQuestionCard({super.key});
 

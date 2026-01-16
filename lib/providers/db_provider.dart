@@ -12,6 +12,7 @@ import 'package:image_picker/image_picker.dart';
 import 'package:journal/pages/questionWalls/ranked_list_memories/ranked_list_class.dart';
 import 'package:journal/pages/questionWalls/yir_classes.dart';
 import 'package:journal/providers/db/db_yir_helpers.dart';
+import 'package:journal/providers/demo/demo_data.dart';
 import 'package:journal/services/image_compressor.dart';
 
 enum EntryType { journal, photo }
@@ -216,13 +217,21 @@ class DBProvider extends ChangeNotifier {
   List<Yir> _allYir = [];
   List<RankedListClass> get rankedLists => _rankedLists;
   String? get userId => _userId;
-  set userId(String? id) {
-    if ((_userId != id && id != null) || _journalEntries.isEmpty) {
+set userId(String? id) {
+    // 1. If the new ID is null, just clear our local ID and STOP.
+    if (id == null) {
+      _userId = null;
+      return; 
+    }
+
+    // 2. Only run logic if the ID is different OR we have no data yet
+    if (_userId != id || _journalEntries.isEmpty) {
       _userId = id;
-      _initOnce();
-    } else {
-      print(
-          'DBProvider already initialized. Journal entries: ${_journalEntries.length}');
+      
+      // 3. Only attempt fetch if we actually have a user ID (Double check)
+      if (_userId != null) {
+         _initOnce();
+      }
     }
   }
 
@@ -347,6 +356,7 @@ class DBProvider extends ChangeNotifier {
   }
 
   Future<void> fetchJournalEntrySnapshot() async {
+    if (_isDemoMode) return;
     if (_userId == null) return;
     final uid = _userId!;
 
@@ -757,6 +767,7 @@ Future<String?> _getOrUploadPic(XFile xfile) async {
   }
 
   Future<void> loadChapters() async {
+    if (_isDemoMode) return;
   if (_userId == null) return;
 
   try {
@@ -902,6 +913,7 @@ Future<String?> _getOrUploadPic(XFile xfile) async {
   }
 
   Future<void> fetchAllRankedLists() async {
+    if (_isDemoMode) return;
     if (_userId == null) {
       throw StateError('DBProvider: User ID is not set.');
     }
@@ -1265,4 +1277,50 @@ Future<String?> _getOrUploadPic(XFile xfile) async {
     });
     await _refreshYirInMemory(year);
   }
+
+
+
+
+
+
+// 2. Add a flag inside DBProvider
+bool _isDemoMode = false;
+
+// 3. Add this method to DBProvider
+void enableDemoMode() {
+    _isDemoMode = true;
+    _userId = 'demo_user_id';
+    
+    // 1. Clear existing data
+    _journalEntries = {};
+    _journalEntryDates = [];
+    _chapters = {}; // Clear chapters
+    
+    // 2. Load Static Journal Entries
+    for (var entry in kDemoEntries) {
+      _journalEntries[entry.id] = entry;
+    }
+    
+    // 3. Load Static Chapters (NEW)
+    for (var chap in kDemoChapters) {
+      _chapters[chap.id] = chap;
+    }
+    
+    // 4. Rebuild the dates list
+    _journalEntryDates = _journalEntries.entries
+        .map((entry) => {
+              'date': entry.value.date,
+              'id': entry.key,
+              'type': entry.value.type,
+            })
+        .toList();
+
+    // 5. Sort
+    _journalEntryDates.sort(
+        (a, b) => (b['date'] as DateTime).compareTo(a['date'] as DateTime));
+        
+    _isInitialized = true;
+    notifyListeners();
+  }
+
 }

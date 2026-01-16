@@ -1,11 +1,11 @@
-import 'package:firebase_auth/firebase_auth.dart';
+import 'package:device_preview/device_preview.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:firebase_core/firebase_core.dart';
+import 'package:firebase_auth/firebase_auth.dart';
 import 'package:journal/firebase_options.dart';
 import 'package:journal/pages/login_page.dart';
 import 'package:journal/pages/myhomepage.dart';
-// import 'package:journal/pages/questionWalls/questions/admin/seeder.dart';
 import 'package:journal/pages/questionWalls/questions/provider/question_provider.dart';
 import 'package:journal/providers/db_provider.dart';
 import 'package:journal/providers/theme_provider.dart';
@@ -19,16 +19,11 @@ Future<void> main() async {
     await FirebaseAuth.instance.setPersistence(Persistence.LOCAL);
   }
 
-  // await QuestionSeeder.seedDatabase();
-
   runApp(
     MultiProvider(
       providers: [
-        // 1) First, make UserProvider available:
         ChangeNotifierProvider(create: (_) => UserProvider()),
         ChangeNotifierProvider(create: (_) => QuestionsProvider()),
-
-        // 2) Now that UserProvider exists, proxy it to ThemeProvider:
         ChangeNotifierProxyProvider<UserProvider, ThemeProvider>(
           create: (_) => ThemeProvider(),
           update: (context, userProv, themeProv) {
@@ -39,47 +34,70 @@ Future<void> main() async {
             return themeProv!;
           },
         ),
-
-        // 3) Finally, the DBProvider proxy:
-        ChangeNotifierProxyProvider<UserProvider, DBProvider>(
-          create: (_) => DBProvider(),
-          update: (context, userProv, dbProv) {
-            dbProv!.userId = userProv.userId;
-            return dbProv;
-          },
-        ),
+       ChangeNotifierProxyProvider<UserProvider, DBProvider>(
+  create: (_) => DBProvider(),
+  update: (context, userProv, dbProv) {
+    dbProv!.userId = userProv.userId;
+    return dbProv;
+  },
+),
       ],
       child: const MyApp(),
     ),
   );
 }
 
-class MyApp extends StatelessWidget {
+ class MyApp extends StatelessWidget {
   const MyApp({super.key});
 
   @override
   Widget build(BuildContext context) {
-    // 3) Watch login state
     final loggedIn = context.watch<UserProvider>().isLoggedIn;
-    // 4) Watch ThemeProvider for dynamic theme
     final themeProv = context.watch<ThemeProvider>();
 
-    return MaterialApp(
-      debugShowCheckedModeBanner: false,
-      theme: themeProv.themeData,
-      // Wrap *all* routes in this gradient
-      builder: (context, child) {
-        return Container(
-            decoration: BoxDecoration(
-              gradient: LinearGradient(
-                colors: themeProv.backgroundGradientColors,
-                begin: Alignment.topCenter,
-                end: Alignment.bottomCenter,
+    Widget appContent(BuildContext context) => MaterialApp(
+          debugShowCheckedModeBanner: false,
+          theme: themeProv.themeData,
+          builder: (context, child) {
+            return Container(
+              decoration: BoxDecoration(
+                gradient: LinearGradient(
+                  colors: themeProv.backgroundGradientColors,
+                  begin: Alignment.topCenter,
+                  end: Alignment.bottomCenter,
+                ),
+              ),
+              child: child,
+            );
+          },
+          home: loggedIn ? const MyHomePage() : const LoginPage(),
+        );
+
+    return LayoutBuilder(
+      builder: (context, constraints) {
+        if (constraints.maxWidth < 600) {
+          return appContent(context);
+        }
+
+        // WRAP WITH DIRECTIONALITY TO FIX THE ERROR
+        return Directionality(
+          textDirection: TextDirection.ltr, // Standard left-to-right direction
+          child: Scaffold(
+            backgroundColor: const Color(0xFF1A1A1A),
+            body: Center(
+              child: Padding(
+                padding: const EdgeInsets.symmetric(vertical: 40),
+                child: DeviceFrame(
+                  device: Devices.android.googlePixel9,
+                  isFrameVisible: true,
+                  orientation: Orientation.portrait,
+                  screen: appContent(context),
+                ),
               ),
             ),
-            child: child);
+          ),
+        );
       },
-      home: loggedIn ? const MyHomePage() : const LoginPage(),
     );
   }
 }
